@@ -39,18 +39,18 @@ appear grouped under one device, no manual HA configuration required.
 2. On the HA app:
 
     Set a duration, then select a zone to water.
-    
+
 ### Status LED
 
-- **AUTO mode LED** : 
+- **AUTO mode LED** :
   - ON, the lawn sprinkler is in AUTO mode
-  - OFF, MANUAL mode is active.  
+  - OFF, MANUAL mode is active.
 - **STATUS LED** : gives indication on the status of the lawn sprinkler controller
   - OFF: The device is turned off
   - Solid ON: The device is booting up
   - low flashing (100ms ON, 3000ms period): The device is connected to Wi-Fi/MQTT
-  - Fast flashing (500ms ON, 1000ms period): The device was unable to connect to Wi-Fi/MQTT  
-- **Zone LED** : Each zone has a LED indicating whether the zone is active or not- 
+  - Fast flashing (500ms ON, 1000ms period): The device was unable to connect to Wi-Fi/MQTT
+- **Zone LED** : Each zone has a LED indicating whether the zone is active or not-
   - ON : the zone is currently active
   - OFF: the zone is inactive
 
@@ -61,7 +61,6 @@ Drives 6 triac BT136-600 in Dpak package
 Uses former Rainbird ESP-RXZe controller housing and its 24Vac/0.65A transformer
 
 Electronic board designed using Kicad 9
-
 
 ## 4. Software
 Developped with esp idf on freeRTOS architecture
@@ -299,3 +298,113 @@ cards:
 Notes:
 
 - The entity names must match between the MQTT discovery and the yml snippet.
+
+## Project layout
+
+```
+main/
+  zone/        6 active-high outputs (MOC3041 triac drivers), mutual exclusion
+  button/      6 push buttons via iot_button, one click -> controller event
+  led/         6 status LEDs (one per zone)
+  controller/  AUTO/MANUAL state machine, schedule firing, run-until expiry,
+               30-min auto-return to AUTO
+  schedule/    up to 32 cron entries persisted in NVS
+  wifi/        Wi-Fi STA + SNTP/timezone
+  mqtt/        MQTT client, topic dispatcher, Home Assistant discovery
+```
+
+GPIO assignments are placeholders in the three `*_config.h` files
+(`zone/zone_config.h`, `button/button_config.h`, `led/led_config.h`) - update
+once the schematic is final.
+
+
+## Tunables
+
+Easy-to-tweak knobs in `controller/controller.c`:
+
+- `MANUAL_AUTORETURN_SEC` (default `30 * 60`) - idle timeout before MANUAL
+  reverts to AUTO.
+- `MANUAL_DEFAULT_DURATION_SEC` (default `0`) - duration applied to a button
+  press in MANUAL. `0` means run until the user stops it; set a positive value
+  for a safety cap.
+- The auto-return rule: by default the 30-min timer only counts while no zone
+  is active. The condition is in `tick_manual()` if you want to change it.
+
+
+## Configuration
+
+Set via `idf.py menuconfig` -> *Lawn Sprinkler Controller Settings*:
+
+| Option              | Purpose                                              |
+|---------------------|------------------------------------------------------|
+| `WIFI_SSID`         | Wi-Fi credentials                                    |
+| `WIFI_PASSWORD`     |                                                      |
+| `MQTT_URI`          | `mqtt://user:pass@host:port`                         |
+| `MQTT_TOPIC_PREFIX` | Base topic, must end with `/` (e.g. `lawn-sprinkler/`) |
+| `MQTT_TOPIC_VERSION`| Version sub-topic name                               |
+| `DEVICE_ID`         | Used in HA discovery `unique_id`s                    |
+| `DEVICE_NAME`       | Friendly name shown in HA                            |
+| `NTP_SERVER`        | e.g. `pool.ntp.org`                                  |
+| `NTP_TZ`            | POSIX TZ string (default: Europe/Paris)              |
+
+
+## MQTT API
+
+With `MQTT_TOPIC_PREFIX = "lawn-sprinkler/"`:
+
+### Subscribed (HA -> device)
+
+| Topic                            | Payload                                | Effect                                       |
+|----------------------------------|----------------------------------------|----------------------------------------------|
+| `lawn-sprinkler/mode/set`        | `AUTO` \| `MANUAL`                     | Switch mode                                  |
+| `lawn-sprinkler/zone/<n>/set`    | `ON` \| `OFF`                          | Start zone (run-forever) / stop zone         |
+| `lawn-sprinkler/zone/<n>/run`    | seconds (e.g. `600`)                   | Start zone with timeout (`0` or empty = stop)|
+| `lawn-sprinkler/schedule/set`    | JSON array (see below)                 | Replace schedule, persist to NVS             |
+
+### Published (device -> HA), retained
+
+| Topic                              | Payload                       |
+|------------------------------------|-------------------------------|
+| `lawn-sprinkler/mode/state`        | `AUTO` \| `MANUAL`            |
+| `lawn-sprinkler/zone/<n>/state`    | `ON` \| `OFF`                 |
+| `lawn-sprinkler/schedule/state`    | JSON array (see below)        |
+| `lawn-sprinkler/availability`      | `online` (LWT: `offline`)     |
+| `lawn-sprinkler/version`           | `vX.Y.Z - <git-short-sha>`    |
+
+### Schedule JSON
+
+```json
+[
+  {"zone": 0, "hour": 6,  "minute": 30, "dow": 127, "duration": 600, "enabled": true},
+  {"zone": 3, "hour": 21, "minute": 0,  "dow": 42,  "duration": 900, "enabled": true}
+]
+```
+
+- `zone`: 0..5
+- `hour`: 0..23, `minute`: 0..59 (local time, after SNTP sync)
+- `dow`: bitmask of days, **bit 0 = Sunday** ... bit 6 = Saturday (`127` = every day)
+- `duration`: seconds
+- `enabled`: optional, defaults to `true`
+
+### Home Assistant discovery
+
+On every (re)connect the device publishes retained discovery messages under
+`homeassistant/`:
+
+- `homeassistant/select/<DEVICE_ID>/mode/config` - mode select (`AUTO`/`MANUAL`)
+- `homeassistant/switch/<DEVICE_ID>/zone_<n>/config` - one switch per zone
+
+All entities share the same `device` block so they appear grouped in HA.
+
+
+## Build & flash
+
+```bash
+. $IDF_PATH/export.sh
+make build           # or: idf.py build
+make flash PORT=/dev/ttyACM0
+make monitor
+```
+
+`make_version.py` derives `VERSION` and `BUILD_ID_SHORT` from `git describe`,
+so make sure at least one tag exists (e.g. `git tag v0.1.0`).

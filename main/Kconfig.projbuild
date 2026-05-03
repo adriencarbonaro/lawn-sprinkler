@@ -1,0 +1,44 @@
+menu "Lawn Sprinkler Controller Settings"
+
+# Wifi configuration -----------------------------------------------------------
+
+config WIFI_SSID
+    string "WiFi SSID"
+
+config WIFI_PASSWORD
+    string "WiFi Password"
+
+# MQTT configuration -----------------------------------------------------------
+
+config MQTT_URI
+    string "MQTT Uri (format: mqtt://[USER]:[PASSWORD]@[HOST]:[PORT])"
+
+config MQTT_TOPIC_PREFIX
+    string "MQTT topic prefix (must end with '/')"
+    default "lawn-sprinkler/"
+
+config MQTT_TOPIC_VERSION
+    string "MQTT version topic name"
+    default "version"
+
+# Device identity --------------------------------------------------------------
+
+config DEVICE_ID
+    string "Device ID (used in HA discovery unique ids)"
+    default "lawn_sprinkler"
+
+config DEVICE_NAME
+    string "Device friendly name"
+    default "Lawn Sprinkler"
+
+# Time -------------------------------------------------------------------------
+
+config NTP_SERVER
+    string "NTP server"
+    default "pool.ntp.org"
+
+config NTP_TZ
+    string "POSIX timezone string"
+    default "CET-1CEST,M3.5.0/2,M10.5.0/3"
+
+endmenu
