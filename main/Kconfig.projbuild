@@ -31,6 +31,10 @@ config DEVICE_NAME
     string "Device friendly name"
     default "Lawn Sprinkler"
 
+config ESP32_MODEL
+    string "ESP32 chip model"
+    default "ESP32"
+
 # Time -------------------------------------------------------------------------
 
 config NTP_SERVER
