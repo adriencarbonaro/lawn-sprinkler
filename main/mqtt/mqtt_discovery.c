@@ -12,8 +12,27 @@
 
 static const char* TAG = "mqtt_discovery";
 
+#define XSTR(x) #x
+#define STR(x) XSTR(x)
+
 #define DISCOVERY_PREFIX "homeassistant"
 #define DISCOVERY_TOPIC DISCOVERY_PREFIX "/device/" DEVICE_ID "/config"
+
+#define MODE_ID "mode"
+#define MODE_NAME "Mode"
+#define MODE_ICON "mdi:auto-mode"
+
+#define VERSION_ID "version"
+#define VERSION_NAME "Version"
+#define VERSION_ICON "mdi:git"
+
+#define DURATION_ID "duration"
+#define DURATION_NAME "Duration"
+#define DURATION_ICON "mdi:timer-sand"
+
+#define ZONE_ID "zone"
+#define ZONE_NAME "Zone"
+#define ZONE_ICON "mdi:sprinkler-variant"
 
 #define DEVICE_BLOCK                                \
     "\"device\":{"                                  \
@@ -45,21 +64,44 @@ static const char* TAG = "mqtt_discovery";
     "\"payload_not_available\":\"offline\"" \
     "}]"
 
-#define MODE_COMPONENT                   \
-    "\"" DEVICE_ID                       \
-    "_mode\":{"                          \
-    "\"platform\":\"select\","           \
-    "\"name\":\"Mode\","                 \
-    "\"unique_id\":\"" DEVICE_ID         \
-    "_mode\","                           \
-    "\"object_id\":\"" DEVICE_ID         \
-    "_mode\","                           \
-    "\"command_topic\":\"" T_MODE_SET    \
-    "\","                                \
-    "\"state_topic\":\"" T_MODE_STATE    \
-    "\","                                \
-    "\"options\":[\"AUTO\",\"MANUAL\"]," \
-    "\"icon\":\"mdi:auto-mode\""         \
+#define MODE_COMPONENT                       \
+    "\"" DEVICE_ID "_" MODE_ID               \
+    "\":{"                                   \
+    "\"platform\":\"select\","               \
+    "\"name\":\"" MODE_NAME                  \
+    "\","                                    \
+    "\"unique_id\":\"" DEVICE_ID "_" MODE_ID \
+    "\","                                    \
+    "\"object_id\":\"" DEVICE_ID "_" MODE_ID \
+    "\","                                    \
+    "\"command_topic\":\"" T_MODE_SET        \
+    "\","                                    \
+    "\"state_topic\":\"" T_MODE_STATE        \
+    "\","                                    \
+    "\"options\":[\"AUTO\",\"MANUAL\"],"     \
+    "\"icon\":\"" MODE_ICON                  \
+    "\""                                     \
+    "}"
+
+#define DURATION_COMPONENT                                  \
+    "\"" DEVICE_ID "_" DURATION_ID                          \
+    "\":{"                                                  \
+    "\"platform\":\"select\","                              \
+    "\"name\":\"" DURATION_NAME                             \
+    "\","                                                   \
+    "\"unique_id\":\"" DEVICE_ID "_" DURATION_ID            \
+    "\","                                                   \
+    "\"object_id\":\"" DEVICE_ID "_" DURATION_ID            \
+    "\","                                                   \
+    "\"command_topic\":\"" T_DURATION_SET                   \
+    "\","                                                   \
+    "\"state_topic\":\"" T_DURATION_STATE                   \
+    "\","                                                   \
+    "\"options\":[\"" DURATION_0_STR "\",\"" DURATION_1_STR \
+    "\",\"" DURATION_2_STR "\",\"" DURATION_3_STR           \
+    "\"],"                                                  \
+    "\"icon\":\"" DURATION_ICON                             \
+    "\""                                                    \
     "}"
 
 #define VERSION_COMPONENT                 \
@@ -74,30 +116,33 @@ static const char* TAG = "mqtt_discovery";
     "\"state_topic\":\"" T_VERSION        \
     "\","                                 \
     "\"entity_category\":\"diagnostic\"," \
-    "\"icon\":\"mdi:git\""                \
+    "\"icon\":\"" VERSION_ICON            \
+    "\""                                  \
     "}"
 
 static int append_zone(char* buf, size_t cap, size_t off, uint8_t i)
 {
     return snprintf(buf + off,
                     cap - off,
-                    ",\"" DEVICE_ID
-                    "_zone_%u\":{"
+                    ",\"" DEVICE_ID "_" ZONE_ID
+                    "_%u\":{"
                     "\"platform\":\"switch\","
-                    "\"name\":\"Zone %u\","
-                    "\"unique_id\":\"" DEVICE_ID
-                    "_zone_%u\","
-                    "\"object_id\":\"" DEVICE_ID
-                    "_zone_%u\","
-                    "\"command_topic\":\"" T_ZONE_PREFIX
-                    "%u/set\","
-                    "\"state_topic\":\"" T_ZONE_PREFIX
-                    "%u/state\","
+                    "\"name\":\"" ZONE_NAME
+                    " %u\","
+                    "\"unique_id\":\"" DEVICE_ID "_" ZONE_ID
+                    "_%u\","
+                    "\"object_id\":\"" DEVICE_ID "_" ZONE_ID
+                    "_%u\","
+                    "\"command_topic\":\"" T_ZONE_PREFIX "%u/" T_SET_KEYWORD
+                    "\","
+                    "\"state_topic\":\"" T_ZONE_PREFIX "%u/" T_STATE_KEYWORD
+                    "\","
                     "\"payload_on\":\"ON\","
                     "\"payload_off\":\"OFF\","
                     "\"state_on\":\"ON\","
                     "\"state_off\":\"OFF\","
-                    "\"icon\":\"mdi:sprinkler-variant\""
+                    "\"icon\":\"" ZONE_ICON
+                    "\""
                     "}",
                     i,
                     i + 1,
@@ -119,11 +164,11 @@ void mqtt_discovery_publish_all(void)
         return;
     }
 
-    int off =
-        snprintf(payload,
-                 cap,
-                 "{" DEVICE_BLOCK "," ORIGIN_BLOCK "," AVAIL_BLOCK
-                 ",\"components\":{" MODE_COMPONENT "," VERSION_COMPONENT);
+    int off = snprintf(payload,
+                       cap,
+                       "{" DEVICE_BLOCK "," ORIGIN_BLOCK "," AVAIL_BLOCK
+                       ",\"components\":{" MODE_COMPONENT "," DURATION_COMPONENT
+                       "," VERSION_COMPONENT);
     if (off < 0 || (size_t)off >= cap) goto truncated;
 
     for (uint8_t i = 0; i < ZONE_COUNT; i++)

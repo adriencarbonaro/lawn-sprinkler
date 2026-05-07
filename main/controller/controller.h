@@ -21,6 +21,7 @@ void controller_init(void);
 
 void controller_on_button(uint8_t zone);
 void controller_set_mode(controller_mode_t mode);
+void controller_set_duration(uint32_t duration_sec);
 
 /* Start watering `zone` for `duration_sec` (0 = no auto-stop).
  * Forces MANUAL mode. */

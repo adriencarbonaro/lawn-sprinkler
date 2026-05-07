@@ -16,6 +16,7 @@ int mqtt_publish(const char* topic, const char* msg, int retain);
 /* Convenience helpers. */
 void mqtt_publish_zone_state(uint8_t zone, bool on);
 void mqtt_publish_mode(const char* mode_str);
+void mqtt_publish_duration(const char* duration_str);
 void mqtt_publish_schedule_json(const char* json);
 void mqtt_publish_availability(const char* status);
 

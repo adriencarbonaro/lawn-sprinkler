@@ -79,6 +79,21 @@ static void handle_mode_set(const char* msg, int msg_len)
         ESP_LOGW(TAG, "unknown mode payload: %.*s", msg_len, msg);
 }
 
+static void handle_duration_set(const char* msg, int msg_len)
+{
+    char buf[16] = {0};
+    int n = MIN(msg_len, (int)sizeof(buf) - 1);
+    memcpy(buf, msg, n);
+    char* end = NULL;
+    long secs = strtol(buf, &end, 10);
+    if (end == buf || secs < 0)
+    {
+        ESP_LOGW(TAG, "duration: invalid payload: %.*s", msg_len, msg);
+        return;
+    }
+    controller_set_duration((uint32_t)secs);
+}
+
 static void handle_schedule_set(const char* msg, int msg_len)
 {
     cJSON* root = cJSON_ParseWithLength(msg, msg_len);
@@ -159,10 +174,9 @@ static void handle_zone_topic(const char* sub,
 
     if (suffix_len == 3 && memcmp(suffix, "set", 3) == 0)
     {
-        if (payload_eq_ci(msg, msg_len, "ON"))
-            controller_manual_start(zone, 0);
-        else if (payload_eq_ci(msg, msg_len, "OFF"))
-            controller_manual_stop(zone);
+        if (payload_eq_ci(msg, msg_len, "ON") ||
+            payload_eq_ci(msg, msg_len, "OFF"))
+            controller_on_button(zone);
         else
             ESP_LOGW(TAG, "zone %u set: unknown payload", zone);
     }
@@ -191,6 +205,11 @@ void mqtt_topics_dispatch(const char* topic,
         handle_mode_set(msg, msg_len);
         return;
     }
+    if (topic_eq(topic, topic_len, T_DURATION_SET))
+    {
+        handle_duration_set(msg, msg_len);
+        return;
+    }
     if (topic_eq(topic, topic_len, T_SCHED_SET))
     {
         handle_schedule_set(msg, msg_len);
@@ -210,6 +229,7 @@ void mqtt_topics_dispatch(const char* topic,
 void mqtt_topics_subscribe(esp_mqtt_client_handle_t c)
 {
     esp_mqtt_client_subscribe(c, T_MODE_SET, 1);
+    esp_mqtt_client_subscribe(c, T_DURATION_SET, 1);
     esp_mqtt_client_subscribe(c, T_SCHED_SET, 1);
     esp_mqtt_client_subscribe(c, T_ZONE_PREFIX "+/set", 1);
     esp_mqtt_client_subscribe(c, T_ZONE_PREFIX "+/run", 1);

@@ -10,11 +10,17 @@
 #define T_AVAIL T_BASE "availability"
 #define T_VERSION T_BASE MQTT_TOPIC_VERSION
 
-#define T_MODE_STATE T_BASE "mode/state"
-#define T_MODE_SET T_BASE "mode/set"
+#define T_SET_KEYWORD "set"
+#define T_STATE_KEYWORD "state"
 
-#define T_SCHED_STATE T_BASE "schedule/state"
-#define T_SCHED_SET T_BASE "schedule/set"
+#define T_MODE_STATE T_BASE "mode/" T_STATE_KEYWORD
+#define T_MODE_SET T_BASE "mode/" T_SET_KEYWORD
+
+#define T_DURATION_STATE T_BASE "duration/" T_STATE_KEYWORD
+#define T_DURATION_SET T_BASE "duration/" T_SET_KEYWORD
+
+#define T_SCHED_STATE T_BASE "schedule/" T_STATE_KEYWORD
+#define T_SCHED_SET T_BASE "schedule/" T_SET_KEYWORD
 
 #define T_ZONE_PREFIX T_BASE "zone/"
 /* Per-zone leaves: zone/<n>/state, zone/<n>/set, zone/<n>/run */

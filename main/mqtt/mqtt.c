@@ -80,6 +80,11 @@ void mqtt_publish_mode(const char* mode_str)
     mqtt_publish(T_MODE_STATE, mode_str, 1);
 }
 
+void mqtt_publish_duration(const char* duration_str)
+{
+    mqtt_publish(T_DURATION_STATE, duration_str, 1);
+}
+
 void mqtt_publish_zone_state(uint8_t zone, bool on)
 {
     char topic[64];

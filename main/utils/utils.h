@@ -3,6 +3,9 @@
 
 #define ARRAY_DIM(x) (sizeof(x) / sizeof((x)[0]))
 
+#define XSTR(x) #x
+#define STR(x) XSTR(x)
+
 #define HI_BYTE(x) ((x) >> 8) & 0xff
 #define LO_BYTE(x) (x) & 0xff
 

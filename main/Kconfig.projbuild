@@ -49,6 +49,23 @@ config NTP_TZ
     string "POSIX timezone string"
     default "CET-1CEST,M3.5.0/2,M10.5.0/3"
 
+# Sprinkler specific
+config DURATION_0
+    int "Watering duration index 0"
+    default 5
+
+config DURATION_1
+    int "Watering duration index 1"
+    default 10
+
+config DURATION_2
+    int "Watering duration index 2"
+    default 15
+
+config DURATION_3
+    int "Watering duration index 3"
+    default 30
+
 # GPIO -------------------------------------------------------------------------
 
 config GPIO_BTN_ZONE_1
@@ -74,5 +91,29 @@ config GPIO_BTN_ZONE_5
 config GPIO_BTN_ZONE_6
     int "Button GPIO (zone 6)"
     default 9
+
+config GPIO_ZONE_1
+    int "Zone GPIO (zone 1)"
+    default 18
+
+config GPIO_ZONE_2
+    int "Zone GPIO (zone 2)"
+    default 19
+
+config GPIO_ZONE_3
+    int "Zone GPIO (zone 3)"
+    default 20
+
+config GPIO_ZONE_4
+    int "Zone GPIO (zone 4)"
+    default 21
+
+config GPIO_ZONE_5
+    int "Zone GPIO (zone 5)"
+    default 22
+
+config GPIO_ZONE_6
+    int "Zone GPIO (zone 6)"
+    default 23
 
 endmenu

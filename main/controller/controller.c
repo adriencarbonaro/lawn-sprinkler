@@ -20,9 +20,6 @@
  * Change here if the spec evolves. */
 #define MANUAL_AUTORETURN_SEC (30 * 60)
 
-#define DURATION_INFINITE 0
-#define MANUAL_DEFAULT_DURATION_SEC DURATION_INFINITE
-
 #define TICK_MS 500
 
 /* Events ********************************************************************/
@@ -33,6 +30,7 @@ typedef enum
     EV_MANUAL_START,
     EV_MANUAL_STOP,
     EV_SET_MODE,
+    EV_SET_DURATION,
 } event_id_t;
 
 typedef struct
@@ -43,20 +41,44 @@ typedef struct
     controller_mode_t mode;
 } event_t;
 
-/* State *********************************************************************/
+typedef enum
+{
+    DURATION_0 = CONFIG_DURATION_0,
+    DURATION_1 = CONFIG_DURATION_1,
+    DURATION_2 = CONFIG_DURATION_2,
+    DURATION_3 = CONFIG_DURATION_3,
+} duration_t;
+
+static const char* duration_str[] = {
+    [DURATION_0] = DURATION_0_STR,
+    [DURATION_1] = DURATION_1_STR,
+    [DURATION_2] = DURATION_2_STR,
+    [DURATION_3] = DURATION_3_STR,
+};
+
+#define DURATION_DEFAULT DURATION_0
+#define DURATION_INFINITE 0
+
+/* State
+ *********************************************************************/
 
 static const char* TAG = "controller";
 
 static QueueHandle_t queue = NULL;
 
 static controller_mode_t mode = MODE_AUTO;
-static time_t run_until = MANUAL_DEFAULT_DURATION_SEC;
+static duration_t duration = DURATION_DEFAULT;
+static time_t run_until = DURATION_DEFAULT;
 static time_t last_manual_event = 0;
 static int16_t last_fired_minute = -1; /* hour*60+minute, dedup auto fires */
 
 /* Helpers *******************************************************************/
 
 static void publish_mode(void) { mqtt_publish_mode(mode_str[mode]); }
+static void publish_duration(void)
+{
+    mqtt_publish_duration(duration_str[duration]);
+}
 
 static void publish_zone_states(uint8_t prev_zone, uint8_t new_zone)
 {
@@ -67,19 +89,23 @@ static void publish_zone_states(uint8_t prev_zone, uint8_t new_zone)
     }
 }
 
-static void switch_zone(uint8_t new_zone, time_t until)
+static void switch_zone(uint8_t new_zone, uint32_t duration)
 {
+    if (new_zone != ZONE_NONE)
+        ESP_LOGI(TAG, "Switching to zone %u for %u secs", new_zone, duration);
     uint8_t prev = zone_get_active();
     zone_set_active(new_zone);
-    run_until = until;
+    run_until = (duration > 0) ? (time(NULL) + duration) : 0;
     publish_zone_states(prev, new_zone);
 }
 
-static void enter_mode(controller_mode_t new_mode)
+static void stop_all_zones(void) { switch_zone(ZONE_NONE, DURATION_INFINITE); }
+
+static void switch_mode(controller_mode_t new_mode)
 {
     if (new_mode == mode) return;
     mode = new_mode;
-    ESP_LOGI(TAG, "mode -> %s", mode_str[mode]);
+    ESP_LOGI(TAG, "Switching to mode %s", mode_str[mode]);
     publish_mode();
 }
 
@@ -94,22 +120,17 @@ static void handle_button(uint8_t zone)
 {
     if (zone >= ZONE_COUNT) return;
 
-    enter_mode(MODE_MANUAL);
+    switch_mode(MODE_MANUAL);
     trigger_manual_activity();
 
     uint8_t active = zone_get_active();
     if (active == zone)
     {
-        switch_zone(ZONE_NONE, 0);
+        stop_all_zones();
     }
     else
     {
-        time_t until = 0;
-        if (MANUAL_DEFAULT_DURATION_SEC > 0)
-        {
-            until = time(NULL) + MANUAL_DEFAULT_DURATION_SEC;
-        }
-        switch_zone(zone, until);
+        switch_zone(zone, duration);
     }
 }
 
@@ -117,17 +138,15 @@ static void handle_manual_start(uint8_t zone, uint32_t duration_sec)
 {
     if (zone >= ZONE_COUNT) return;
 
-    enter_mode(MODE_MANUAL);
+    switch_mode(MODE_MANUAL);
     trigger_manual_activity();
 
-    time_t until =
-        duration_sec > 0 ? time(NULL) + duration_sec : DURATION_INFINITE;
-    switch_zone(zone, until);
+    switch_zone(zone, duration_sec);
 }
 
 static void handle_manual_stop(uint8_t zone)
 {
-    enter_mode(MODE_MANUAL);
+    switch_mode(MODE_MANUAL);
     trigger_manual_activity();
 
     uint8_t active = zone_get_active();
@@ -144,8 +163,26 @@ static void handle_set_mode(controller_mode_t new_mode)
         switch_zone(ZONE_NONE, DURATION_INFINITE);
         last_fired_minute = -1;
     }
-    enter_mode(new_mode);
+    switch_mode(new_mode);
     if (new_mode == MODE_MANUAL) trigger_manual_activity();
+}
+
+static void handle_set_duration(uint32_t sec)
+{
+    switch (sec)
+    {
+        case DURATION_0:
+        case DURATION_1:
+        case DURATION_2:
+        case DURATION_3:
+            duration = (duration_t)sec;
+            ESP_LOGI(TAG, "duration -> %us", (unsigned)sec);
+            break;
+        default:
+            ESP_LOGW(TAG, "duration: rejected %us", (unsigned)sec);
+            break;
+    }
+    publish_duration();
 }
 
 /* Periodic logic ************************************************************/
@@ -163,9 +200,7 @@ static void tick_auto(const struct tm* lt)
                  "auto fire: zone=%u duration=%us",
                  e->zone,
                  e->duration_sec);
-        time_t until = e->duration_sec > 0 ? time(NULL) + e->duration_sec
-                                           : DURATION_INFINITE;
-        switch_zone(e->zone, until);
+        switch_zone(e->zone, e->duration_sec);
         last_fired_minute = minute_of_day;
     }
 }
@@ -178,7 +213,7 @@ static void tick_manual(time_t now)
         (now - last_manual_event) >= MANUAL_AUTORETURN_SEC)
     {
         ESP_LOGI(TAG, "manual idle timeout - returning to AUTO");
-        enter_mode(MODE_AUTO);
+        switch_mode(MODE_AUTO);
     }
 }
 
@@ -186,8 +221,8 @@ static void tick_run_until(time_t now)
 {
     if (run_until > 0 && now >= run_until && zone_any_active())
     {
-        ESP_LOGI(TAG, "run-until reached - stopping zone");
-        switch_zone(ZONE_NONE, DURATION_INFINITE);
+        ESP_LOGI(TAG, "Stopping zones (timer reached)");
+        stop_all_zones();
         if (mode == MODE_MANUAL) trigger_manual_activity();
     }
 }
@@ -212,9 +247,6 @@ static void tick(void)
 
 static void task(void* arg)
 {
-    publish_mode();
-    mqtt_publish_zone_state(ZONE_NONE, false);
-
     event_t ev;
     while (1)
     {
@@ -233,6 +265,9 @@ static void task(void* arg)
                     break;
                 case EV_SET_MODE:
                     handle_set_mode(ev.mode);
+                    break;
+                case EV_SET_DURATION:
+                    handle_set_duration(ev.duration_sec);
                     break;
             }
         }
@@ -261,6 +296,12 @@ void controller_set_mode(controller_mode_t new_mode)
     xQueueSend(queue, &ev, 0);
 }
 
+void controller_set_duration(uint32_t duration_sec)
+{
+    event_t ev = {.id = EV_SET_DURATION, .duration_sec = duration_sec};
+    xQueueSend(queue, &ev, 0);
+}
+
 void controller_manual_start(uint8_t zone, uint32_t duration_sec)
 {
     event_t ev = {.id = EV_MANUAL_START,
@@ -281,7 +322,9 @@ void controller_schedule_changed(void)
 
 void controller_publish_state(void)
 {
+    ESP_LOGI(TAG, "Publishing states");
     publish_mode();
+    publish_duration();
     uint8_t z = zone_get_active();
     /* Publish all zones' current state (the inactive ones as OFF). */
     for (uint8_t i = 0; i < ZONE_COUNT; i++)
