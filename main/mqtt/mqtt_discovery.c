@@ -14,18 +14,19 @@ static const char* TAG = "mqtt_discovery";
 #define DISCOVERY_PREFIX "homeassistant"
 
 /* Embed the device block as a substring inside each component config. */
-#define DEVICE_BLOCK                \
-    "\"device\":{"                  \
-    "\"identifiers\":[\"" DEVICE_ID \
-    "\"],"                          \
-    "\"name\":\"" DEVICE_NAME       \
-    "\","                           \
-    "\"manufacturer\":\"DIY\","     \
-    "\"model\":\"" ESP32_MODEL      \
-    "\""                            \
-    ","                             \
-    "\"sw_version\":\"" VERSION     \
-    "\""                            \
+#define DEVICE_BLOCK                   \
+    "\"device\":{"                     \
+    "\"identifiers\":[\"" DEVICE_ID    \
+    "\"],"                             \
+    "\"name\":\"" DEVICE_NAME          \
+    "\","                              \
+    "\"manufacturer\":\"" MANUFACTURER \
+    "\","                              \
+    "\"model\":\"" ESP32_MODEL         \
+    "\""                               \
+    ","                                \
+    "\"sw_version\":\"" VERSION        \
+    "\""                               \
     "}"
 
 #define AVAIL_BLOCK                     \
