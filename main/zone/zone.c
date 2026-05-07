@@ -2,7 +2,6 @@
 
 #include "driver/gpio.h"
 #include "esp_log.h"
-#include "led.h"
 
 static const char* TAG = "zone";
 
@@ -50,9 +49,6 @@ void zone_set_active(uint8_t index)
     if (index != ZONE_NONE) apply(index, true);
 
     active_zone = index;
-    ESP_LOGI(TAG, "active zone -> %u", active_zone);
-
-    led_set_zone(active_zone);
 }
 
 uint8_t zone_get_active(void) { return active_zone; }

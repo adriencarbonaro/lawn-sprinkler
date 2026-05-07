@@ -1,7 +1,6 @@
 #include "button.h"
 #include "controller.h"
 #include "esp_err.h"
-#include "led.h"
 #include "mqtt.h"
 #include "nvs_flash.h"
 #include "schedule.h"
@@ -21,7 +20,6 @@ void app_main(void)
         nvs_flash_init();
     }
 
-    led_init();
     zone_init();
 
     schedule_init();

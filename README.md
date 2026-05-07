@@ -305,18 +305,12 @@ Notes:
 main/
   zone/        6 active-high outputs (MOC3041 triac drivers), mutual exclusion
   button/      6 push buttons via iot_button, one click -> controller event
-  led/         6 status LEDs (one per zone)
   controller/  AUTO/MANUAL state machine, schedule firing, run-until expiry,
                30-min auto-return to AUTO
   schedule/    up to 32 cron entries persisted in NVS
   wifi/        Wi-Fi STA + SNTP/timezone
   mqtt/        MQTT client, topic dispatcher, Home Assistant discovery
 ```
-
-GPIO assignments are placeholders in the three `*_config.h` files
-(`zone/zone_config.h`, `button/button_config.h`, `led/led_config.h`) - update
-once the schematic is final.
-
 
 ## Tunables
 

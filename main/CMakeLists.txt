@@ -2,7 +2,6 @@ set(srcs
     main.c
     button/button.c
     controller/controller.c
-    led/led.c
     mqtt/mqtt.c
     mqtt/mqtt_discovery.c
     mqtt/mqtt_topics.c
@@ -17,7 +16,6 @@ idf_component_register(
     INCLUDE_DIRS "."
                  "button"
                  "controller"
-                 "led"
                  "mqtt"
                  "schedule"
                  "utils"
