@@ -169,7 +169,7 @@ static void handle_zone_topic(const char* sub,
     else if (suffix_len == 3 && memcmp(suffix, "run", 3) == 0)
     {
         char buf[16] = {0};
-        int n = msg_len < (int)sizeof(buf) - 1 ? msg_len : (int)sizeof(buf) - 1;
+        int n = MIN(msg_len, (int)sizeof(buf) - 1);
         memcpy(buf, msg, n);
         long secs = strtol(buf, NULL, 10);
         if (secs > 0)
