@@ -34,7 +34,7 @@ static void on_event(void* arg,
             connected = true;
             mqtt_topics_subscribe(e->client);
             mqtt_publish_availability("online");
-            mqtt_publish(T_VERSION, VERSION " - " BUILD_ID_SHORT, 1);
+            mqtt_publish(T_VERSION, VERSION " (" BUILD_ID_SHORT ")", 1);
             mqtt_discovery_publish_all();
             controller_publish_state();
             break;
