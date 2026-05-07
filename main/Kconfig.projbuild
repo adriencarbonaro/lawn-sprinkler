@@ -41,4 +41,30 @@ config NTP_TZ
     string "POSIX timezone string"
     default "CET-1CEST,M3.5.0/2,M10.5.0/3"
 
+# GPIO -------------------------------------------------------------------------
+
+config GPIO_BTN_ZONE_1
+    string "Button GPIO (zone 1)"
+    default 4
+
+config GPIO_BTN_ZONE_2
+    string "Button GPIO (zone 2)"
+    default 5
+
+config GPIO_BTN_ZONE_3
+    string "Button GPIO (zone 3)"
+    default 6
+
+config GPIO_BTN_ZONE_4
+    string "Button GPIO (zone 4)"
+    default 7
+
+config GPIO_BTN_ZONE_5
+    string "Button GPIO (zone 5)"
+    default 8
+
+config GPIO_BTN_ZONE_6
+    string "Button GPIO (zone 6)"
+    default 9
+
 endmenu

@@ -10,15 +10,11 @@
 #define BUTTON_LONG_PRESS_TIME 1000
 #define BUTTON_SHORT_PRESS_TIME 200
 
-/* Placeholder GPIOs - update with the final schematic. */
-#define BUTTON_GPIOS                                                          \
-    {                                                                         \
-        4, /* zone 1 */                                                       \
-        5, /* zone 2 */                                                       \
-        6, /* zone 3 */                                                       \
-        7, /* zone 4 */                                                       \
-        8, /* zone 5 */                                                       \
-        9, /* zone 6 */                                                       \
-    }
+#define GPIO_BTN_ZONE_1 CONFIG_GPIO_BTN_ZONE_1
+#define GPIO_BTN_ZONE_2 CONFIG_GPIO_BTN_ZONE_2
+#define GPIO_BTN_ZONE_3 CONFIG_GPIO_BTN_ZONE_3
+#define GPIO_BTN_ZONE_4 CONFIG_GPIO_BTN_ZONE_4
+#define GPIO_BTN_ZONE_5 CONFIG_GPIO_BTN_ZONE_5
+#define GPIO_BTN_ZONE_6 CONFIG_GPIO_BTN_ZONE_6
 
 #endif /* BUTTON_CONFIG_H_ */

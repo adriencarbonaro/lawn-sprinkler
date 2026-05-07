@@ -8,7 +8,12 @@
 
 static const char* TAG = "button";
 
-static const int button_gpios[BUTTON_COUNT] = BUTTON_GPIOS;
+static const int button_gpios[BUTTON_COUNT] = {GPIO_BTN_ZONE_1,
+                                               GPIO_BTN_ZONE_2,
+                                               GPIO_BTN_ZONE_3,
+                                               GPIO_BTN_ZONE_4,
+                                               GPIO_BTN_ZONE_5,
+                                               GPIO_BTN_ZONE_6};
 
 static void on_single_click(void* arg, void* user_data)
 {
