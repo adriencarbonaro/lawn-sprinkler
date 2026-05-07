@@ -2,7 +2,9 @@
 
 #include "config.h"
 #include "controller.h"
+#include "esp_event.h"
 #include "esp_log.h"
+#include "esp_netif.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "mqtt_discovery.h"
@@ -16,6 +18,7 @@ static const char* TAG = "mqtt";
 
 static esp_mqtt_client_handle_t client = NULL;
 static volatile bool connected = false;
+static volatile bool started = false;
 
 static void on_event(void* arg,
                      esp_event_base_t base,
@@ -100,6 +103,19 @@ void mqtt_publish_schedule_json(const char* json)
     mqtt_publish(T_SCHED_STATE, json, 1);
 }
 
+static void on_ip_event(void* arg,
+                        esp_event_base_t base,
+                        int32_t id,
+                        void* data)
+{
+    if (id == IP_EVENT_STA_GOT_IP && client && !started)
+    {
+        ESP_LOGI(TAG, "got IP - starting mqtt client");
+        esp_mqtt_client_start(client);
+        started = true;
+    }
+}
+
 void mqtt_init(void)
 {
     esp_mqtt_client_config_t cfg = {
@@ -114,5 +130,11 @@ void mqtt_init(void)
 
     client = esp_mqtt_client_init(&cfg);
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, on_event, client);
-    esp_mqtt_client_start(client);
+
+    /* Defer the actual TCP connect until Wi-Fi has an IP - otherwise the
+     * first connect attempt fails with "Host is unreachable". */
+    esp_event_handler_register(IP_EVENT,
+                               IP_EVENT_STA_GOT_IP,
+                               &on_ip_event,
+                               NULL);
 }
