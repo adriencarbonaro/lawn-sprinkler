@@ -211,8 +211,8 @@ void mqtt_topics_subscribe(esp_mqtt_client_handle_t c)
 {
     esp_mqtt_client_subscribe(c, T_MODE_SET, 1);
     esp_mqtt_client_subscribe(c, T_SCHED_SET, 1);
-    esp_mqtt_client_subscribe(c, T_ZONE_PREFIX "/set", 1);
-    esp_mqtt_client_subscribe(c, T_ZONE_PREFIX "/run", 1);
+    esp_mqtt_client_subscribe(c, T_ZONE_PREFIX "+/set", 1);
+    esp_mqtt_client_subscribe(c, T_ZONE_PREFIX "+/run", 1);
 
     /* Re-publish current schedule on connect. */
     publish_schedule_state();
