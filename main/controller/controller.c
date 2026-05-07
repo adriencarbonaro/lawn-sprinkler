@@ -7,7 +7,9 @@
 #include "mqtt.h"
 #include "schedule.h"
 #include "sntp.h"
+#include "utils.h"
 #include "zone.h"
+#include "zone_config.h"
 
 #include <string.h>
 #include <time.h>

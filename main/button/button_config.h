@@ -1,9 +1,7 @@
 #ifndef BUTTON_CONFIG_H_
 #define BUTTON_CONFIG_H_
 
-#include "zone_config.h"
-
-#define BUTTON_COUNT ZONE_COUNT
+#include "sdkconfig.h"
 
 #define BUTTON_ACTIVE_LEVEL 0
 

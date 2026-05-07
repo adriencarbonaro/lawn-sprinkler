@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "zone_config.h"
-
 #define SCHEDULE_MAX_ENTRIES 32
 
 /* Days-of-week mask: bit 0 = Sunday ... bit 6 = Saturday */

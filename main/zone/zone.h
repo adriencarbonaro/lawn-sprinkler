@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "zone_config.h"
-
 #define ZONE_NONE 0xff
 
 void zone_init(void);

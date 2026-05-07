@@ -1,11 +1,17 @@
 #include "zone.h"
+#include "zone_config.h"
 
 #include "driver/gpio.h"
 #include "esp_log.h"
 
 static const char* TAG = "zone";
 
-static const gpio_num_t zone_gpios[ZONE_COUNT] = ZONE_GPIOS;
+static const gpio_num_t zone_gpios[ZONE_COUNT] = {GPIO_ZONE_1,
+                                                  GPIO_ZONE_2,
+                                                  GPIO_ZONE_3,
+                                                  GPIO_ZONE_4,
+                                                  GPIO_ZONE_5,
+                                                  GPIO_ZONE_6};
 static uint8_t active_zone = ZONE_NONE;
 
 static void apply(uint8_t index, bool on)

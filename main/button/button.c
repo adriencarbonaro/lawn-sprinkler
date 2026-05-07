@@ -5,15 +5,16 @@
 #include "controller.h"
 #include "esp_log.h"
 #include "iot_button.h"
+#include "utils.h"
 
 static const char* TAG = "button";
 
-static const int button_gpios[BUTTON_COUNT] = {GPIO_BTN_ZONE_1,
-                                               GPIO_BTN_ZONE_2,
-                                               GPIO_BTN_ZONE_3,
-                                               GPIO_BTN_ZONE_4,
-                                               GPIO_BTN_ZONE_5,
-                                               GPIO_BTN_ZONE_6};
+static const int button_gpios[] = {GPIO_BTN_ZONE_1,
+                                   GPIO_BTN_ZONE_2,
+                                   GPIO_BTN_ZONE_3,
+                                   GPIO_BTN_ZONE_4,
+                                   GPIO_BTN_ZONE_5,
+                                   GPIO_BTN_ZONE_6};
 
 static void on_single_click(void* arg, void* user_data)
 {
@@ -29,7 +30,7 @@ void button_init(void)
         .short_press_time = BUTTON_SHORT_PRESS_TIME,
     };
 
-    for (uint8_t i = 0; i < BUTTON_COUNT; i++)
+    for (uint8_t i = 0; i < ARRAY_DIM(button_gpios); i++)
     {
         const button_gpio_config_t btn_gpio_cfg = {
             .gpio_num = button_gpios[i],

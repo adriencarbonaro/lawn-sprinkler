@@ -1,20 +1,21 @@
 #ifndef ZONE_CONFIG_H_
 #define ZONE_CONFIG_H_
 
+#include "sdkconfig.h"
+
+#define ZONE_ACTIVE_LEVEL 1
 #define ZONE_COUNT 6
 
-/* Triac drivers (MOC3041) are active-high. Pins are placeholders -
- * update once the schematic is final. */
-#define ZONE_ACTIVE_LEVEL 1
+#define DURATION_0_STR STR(CONFIG_DURATION_0)
+#define DURATION_1_STR STR(CONFIG_DURATION_1)
+#define DURATION_2_STR STR(CONFIG_DURATION_2)
+#define DURATION_3_STR STR(CONFIG_DURATION_3)
 
-#define ZONE_GPIOS                                                            \
-    {                                                                         \
-        0, /* zone 1 */                                                       \
-        1, /* zone 2 */                                                       \
-        2, /* zone 3 */                                                       \
-        3, /* zone 4 */                                                       \
-        10, /* zone 5 */                                                      \
-        11, /* zone 6 */                                                      \
-    }
+#define GPIO_ZONE_1 CONFIG_GPIO_ZONE_1
+#define GPIO_ZONE_2 CONFIG_GPIO_ZONE_2
+#define GPIO_ZONE_3 CONFIG_GPIO_ZONE_3
+#define GPIO_ZONE_4 CONFIG_GPIO_ZONE_4
+#define GPIO_ZONE_5 CONFIG_GPIO_ZONE_5
+#define GPIO_ZONE_6 CONFIG_GPIO_ZONE_6
 
 #endif /* ZONE_CONFIG_H_ */
