@@ -335,17 +335,17 @@ Easy-to-tweak knobs in `controller/controller.c`:
 
 Set via `idf.py menuconfig` -> *Lawn Sprinkler Controller Settings*:
 
-| Option              | Purpose                                              |
-|---------------------|------------------------------------------------------|
-| `WIFI_SSID`         | Wi-Fi credentials                                    |
-| `WIFI_PASSWORD`     |                                                      |
-| `MQTT_URI`          | `mqtt://user:pass@host:port`                         |
-| `MQTT_TOPIC_PREFIX` | Base topic, must end with `/` (e.g. `lawn-sprinkler/`) |
-| `MQTT_TOPIC_VERSION`| Version sub-topic name                               |
-| `DEVICE_ID`         | Used in HA discovery `unique_id`s                    |
-| `DEVICE_NAME`       | Friendly name shown in HA                            |
-| `NTP_SERVER`        | e.g. `pool.ntp.org`                                  |
-| `NTP_TZ`            | POSIX TZ string (default: Europe/Paris)              |
+| Option               | Purpose                                                |
+| -------------------- | ------------------------------------------------------ |
+| `WIFI_SSID`          | Wi-Fi credentials                                      |
+| `WIFI_PASSWORD`      |                                                        |
+| `MQTT_URI`           | `mqtt://user:pass@host:port`                           |
+| `MQTT_TOPIC_PREFIX`  | Base topic, must end with `/` (e.g. `lawn-sprinkler/`) |
+| `MQTT_TOPIC_VERSION` | Version sub-topic name                                 |
+| `DEVICE_ID`          | Used in HA discovery `unique_id`s                      |
+| `DEVICE_NAME`        | Friendly name shown in HA                              |
+| `NTP_SERVER`         | e.g. `pool.ntp.org`                                    |
+| `NTP_TZ`             | POSIX TZ string (default: Europe/Paris)                |
 
 
 ## MQTT API
@@ -354,22 +354,22 @@ With `MQTT_TOPIC_PREFIX = "lawn-sprinkler/"`:
 
 ### Subscribed (HA -> device)
 
-| Topic                            | Payload                                | Effect                                       |
-|----------------------------------|----------------------------------------|----------------------------------------------|
-| `lawn-sprinkler/mode/set`        | `AUTO` \| `MANUAL`                     | Switch mode                                  |
-| `lawn-sprinkler/zone/<n>/set`    | `ON` \| `OFF`                          | Start zone (run-forever) / stop zone         |
-| `lawn-sprinkler/zone/<n>/run`    | seconds (e.g. `600`)                   | Start zone with timeout (`0` or empty = stop)|
-| `lawn-sprinkler/schedule/set`    | JSON array (see below)                 | Replace schedule, persist to NVS             |
+| Topic                         | Payload                | Effect                                        |
+| ----------------------------- | ---------------------- | --------------------------------------------- |
+| `lawn-sprinkler/mode/set`     | `AUTO` \| `MANUAL`     | Switch mode                                   |
+| `lawn-sprinkler/zone/<n>/set` | `ON` \| `OFF`          | Start zone (run-forever) / stop zone          |
+| `lawn-sprinkler/zone/<n>/run` | seconds (e.g. `600`)   | Start zone with timeout (`0` or empty = stop) |
+| `lawn-sprinkler/schedule/set` | JSON array (see below) | Replace schedule, persist to NVS              |
 
 ### Published (device -> HA), retained
 
-| Topic                              | Payload                       |
-|------------------------------------|-------------------------------|
-| `lawn-sprinkler/mode/state`        | `AUTO` \| `MANUAL`            |
-| `lawn-sprinkler/zone/<n>/state`    | `ON` \| `OFF`                 |
-| `lawn-sprinkler/schedule/state`    | JSON array (see below)        |
-| `lawn-sprinkler/availability`      | `online` (LWT: `offline`)     |
-| `lawn-sprinkler/version`           | `vX.Y.Z - <git-short-sha>`    |
+| Topic                           | Payload                    |
+| ------------------------------- | -------------------------- |
+| `lawn-sprinkler/mode/state`     | `AUTO` \| `MANUAL`         |
+| `lawn-sprinkler/zone/<n>/state` | `ON` \| `OFF`              |
+| `lawn-sprinkler/schedule/state` | JSON array (see below)     |
+| `lawn-sprinkler/availability`   | `online` (LWT: `offline`)  |
+| `lawn-sprinkler/version`        | `vX.Y.Z - <git-short-sha>` |
 
 ### Schedule JSON
 
@@ -396,15 +396,136 @@ On every (re)connect the device publishes retained discovery messages under
 
 All entities share the same `device` block so they appear grouped in HA.
 
+### Home Assistant card
 
-## Build & flash
+Notes:
 
-```bash
-. $IDF_PATH/export.sh
-make build           # or: idf.py build
-make flash PORT=/dev/ttyACM0
-make monitor
+- This example uses `custom:button-card` which must be downloaded first. If you want a simpler option using only the UI, you can display the switches from MQTT discovery.
+
+First, we need to create the template in Dashboard UI. This prevent a lot of duplication, as we will need it for each zone button. Go to your dashboard, then click *Edit* > *Raw Configuration Editor*. Paste the following snippet at the top. Modify the colors and style according to your needs.
+
+```yml
+button_card_templates:
+  lawn_sprinkler_button_base:
+    icon: mdi:sprinkler-variant
+    show_name: false
+    show_state: false
+    styles:
+      card:
+        - padding: 8px
+        - height: 48px
+        - border-radius: 12px
+        - '--zone-color': var(--blue-color)
+      icon:
+        - width: 26px
+        - height: 26px
+        - color: var(--zone-color)
+    state:
+      - value: 'on'
+        styles:
+          card:
+            - background-color: var(--zone-color)
+          icon:
+            - color: white
+    tap_action:
+      action: call-service
+      service: switch.toggle
 ```
 
-`make_version.py` derives `VERSION` and `BUILD_ID_SHORT` from `git describe`,
-so make sure at least one tag exists (e.g. `git tag v0.1.0`).
+Then, create the cards.
+
+```yml
+type: vertical-stack
+cards:
+  - type: tile
+    entity: select.lawn_sprinkler_mode
+    features_position: bottom
+    vertical: false
+    color: deep-orange
+    name: Mode
+    hide_state: false
+    state_content:
+      - state
+      - last_changed
+    grid_options:
+      columns: full
+    icon_tap_action:
+      action: none
+    tap_action:
+      action: more-info
+  - type: horizontal-stack
+    cards:
+      - type: custom:button-card
+        template: lawn_sprinkler_button_base
+        entity: switch.lawn_sprinkler_zone_0
+        styles:
+          card:
+            - "--zone-color": var(--blue-color)
+        tap_action:
+          action: call-service
+          service: switch.toggle
+          target:
+            entity_id: switch.lawn_sprinkler_zone_0
+      - type: custom:button-card
+        template: lawn_sprinkler_button_base
+        entity: switch.lawn_sprinkler_zone_1
+        styles:
+          card:
+            - "--zone-color": var(--green-color)
+        tap_action:
+          action: call-service
+          service: switch.toggle
+          target:
+            entity_id: switch.lawn_sprinkler_zone_1
+      - type: custom:button-card
+        template: lawn_sprinkler_button_base
+        entity: switch.lawn_sprinkler_zone_2
+        styles:
+          card:
+            - "--zone-color": var(--purple-color)
+        tap_action:
+          action: call-service
+          service: switch.toggle
+          target:
+            entity_id: switch.lawn_sprinkler_zone_2
+  - type: horizontal-stack
+    cards:
+      - type: custom:button-card
+        template: lawn_sprinkler_button_base
+        entity: switch.lawn_sprinkler_zone_3
+        styles:
+          card:
+            - "--zone-color": var(--red-color)
+        tap_action:
+          action: call-service
+          service: switch.toggle
+          target:
+            entity_id: switch.lawn_sprinkler_zone_3
+      - type: custom:button-card
+        template: lawn_sprinkler_button_base
+        entity: switch.lawn_sprinkler_zone_4
+        styles:
+          card:
+            - "--zone-color": var(--cyan-color)
+        tap_action:
+          action: call-service
+          service: switch.toggle
+          target:
+            entity_id: switch.lawn_sprinkler_zone_4
+      - type: custom:button-card
+        template: lawn_sprinkler_button_base
+        entity: switch.lawn_sprinkler_zone_5
+        styles:
+          card:
+            - "--zone-color": var(--yellow-color)
+        tap_action:
+          action: call-service
+          service: switch.toggle
+          target:
+            entity_id: switch.lawn_sprinkler_zone_5
+
+```
+
+Notes:
+
+- The entity names must match between the MQTT discovery and the yml snippet.
