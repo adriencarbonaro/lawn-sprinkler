@@ -10,6 +10,11 @@ typedef enum
     MODE_MANUAL,
 } controller_mode_t;
 
+static const char* mode_str[] = {
+    [MODE_AUTO] = "AUTO",
+    [MODE_MANUAL] = "MANUAL",
+};
+
 void controller_init(void);
 
 /* Inbound events. Safe to call from any task. */

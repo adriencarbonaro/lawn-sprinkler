@@ -54,10 +54,7 @@ static int16_t last_fired_minute = -1; /* hour*60+minute, dedup auto fires */
 
 /* Helpers *******************************************************************/
 
-static void publish_mode(void)
-{
-    mqtt_publish_mode(mode == MODE_AUTO ? "AUTO" : "MANUAL");
-}
+static void publish_mode(void) { mqtt_publish_mode(mode_str[mode]); }
 
 static void publish_zone_states(uint8_t prev_zone, uint8_t new_zone)
 {
@@ -80,7 +77,7 @@ static void enter_mode(controller_mode_t new_mode)
 {
     if (new_mode == mode) return;
     mode = new_mode;
-    ESP_LOGI(TAG, "mode -> %s", mode == MODE_AUTO ? "AUTO" : "MANUAL");
+    ESP_LOGI(TAG, "mode -> %s", mode_str[mode]);
     publish_mode();
 }
 

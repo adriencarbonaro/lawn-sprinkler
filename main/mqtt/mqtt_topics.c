@@ -71,9 +71,9 @@ static void publish_schedule_state(void)
 
 static void handle_mode_set(const char* msg, int msg_len)
 {
-    if (payload_eq_ci(msg, msg_len, "AUTO"))
+    if (payload_eq_ci(msg, msg_len, mode_str[MODE_AUTO]))
         controller_set_mode(MODE_AUTO);
-    else if (payload_eq_ci(msg, msg_len, "MANUAL"))
+    else if (payload_eq_ci(msg, msg_len, mode_str[MODE_MANUAL]))
         controller_set_mode(MODE_MANUAL);
     else
         ESP_LOGW(TAG, "unknown mode payload: %.*s", msg_len, msg);
