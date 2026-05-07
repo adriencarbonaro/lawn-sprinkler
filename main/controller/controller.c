@@ -85,7 +85,10 @@ static void enter_mode(controller_mode_t new_mode)
     publish_mode();
 }
 
-static void touch_manual_activity(void) { last_manual_event = time(NULL); }
+static inline void trigger_manual_activity(void)
+{
+    last_manual_event = time(NULL);
+}
 
 /* Event handlers ************************************************************/
 
@@ -94,7 +97,7 @@ static void handle_button(uint8_t zone)
     if (zone >= ZONE_COUNT) return;
 
     enter_mode(MODE_MANUAL);
-    touch_manual_activity();
+    trigger_manual_activity();
 
     uint8_t active = zone_get_active();
     if (active == zone)
@@ -117,7 +120,7 @@ static void handle_manual_start(uint8_t zone, uint32_t duration_sec)
     if (zone >= ZONE_COUNT) return;
 
     enter_mode(MODE_MANUAL);
-    touch_manual_activity();
+    trigger_manual_activity();
 
     time_t until = duration_sec > 0 ? time(NULL) + duration_sec : 0;
     switch_zone(zone, until);
@@ -126,7 +129,7 @@ static void handle_manual_start(uint8_t zone, uint32_t duration_sec)
 static void handle_manual_stop(uint8_t zone)
 {
     enter_mode(MODE_MANUAL);
-    touch_manual_activity();
+    trigger_manual_activity();
 
     uint8_t active = zone_get_active();
     if (zone == ZONE_NONE || active == zone)
@@ -143,7 +146,7 @@ static void handle_set_mode(controller_mode_t new_mode)
         last_fired_minute = -1;
     }
     enter_mode(new_mode);
-    if (new_mode == MODE_MANUAL) touch_manual_activity();
+    if (new_mode == MODE_MANUAL) trigger_manual_activity();
 }
 
 /* Periodic logic ************************************************************/
@@ -185,7 +188,7 @@ static void tick_run_until(time_t now)
     {
         ESP_LOGI(TAG, "run-until reached - stopping zone");
         switch_zone(ZONE_NONE, 0);
-        if (mode == MODE_MANUAL) touch_manual_activity();
+        if (mode == MODE_MANUAL) trigger_manual_activity();
     }
 }
 
