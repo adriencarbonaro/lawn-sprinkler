@@ -18,9 +18,8 @@
  * Change here if the spec evolves. */
 #define MANUAL_AUTORETURN_SEC (30 * 60)
 
-/* Default manual-run duration when no explicit duration is given (button
- * press). 0 means "run until the user stops it". */
-#define MANUAL_DEFAULT_DURATION_SEC 0
+#define DURATION_INFINITE 0
+#define MANUAL_DEFAULT_DURATION_SEC DURATION_INFINITE
 
 #define TICK_MS 500
 
@@ -49,7 +48,7 @@ static const char* TAG = "controller";
 static QueueHandle_t queue = NULL;
 
 static controller_mode_t mode = MODE_AUTO;
-static time_t run_until = 0; /* 0 = no auto-stop */
+static time_t run_until = MANUAL_DEFAULT_DURATION_SEC;
 static time_t last_manual_event = 0;
 static int16_t last_fired_minute = -1; /* hour*60+minute, dedup auto fires */
 
@@ -122,7 +121,8 @@ static void handle_manual_start(uint8_t zone, uint32_t duration_sec)
     enter_mode(MODE_MANUAL);
     trigger_manual_activity();
 
-    time_t until = duration_sec > 0 ? time(NULL) + duration_sec : 0;
+    time_t until =
+        duration_sec > 0 ? time(NULL) + duration_sec : DURATION_INFINITE;
     switch_zone(zone, until);
 }
 
@@ -134,7 +134,7 @@ static void handle_manual_stop(uint8_t zone)
     uint8_t active = zone_get_active();
     if (zone == ZONE_NONE || active == zone)
     {
-        switch_zone(ZONE_NONE, 0);
+        switch_zone(ZONE_NONE, DURATION_INFINITE);
     }
 }
 
@@ -142,7 +142,7 @@ static void handle_set_mode(controller_mode_t new_mode)
 {
     if (new_mode == MODE_AUTO)
     {
-        switch_zone(ZONE_NONE, 0);
+        switch_zone(ZONE_NONE, DURATION_INFINITE);
         last_fired_minute = -1;
     }
     enter_mode(new_mode);
@@ -164,7 +164,8 @@ static void tick_auto(const struct tm* lt)
                  "auto fire: zone=%u duration=%us",
                  e->zone,
                  e->duration_sec);
-        time_t until = e->duration_sec > 0 ? time(NULL) + e->duration_sec : 0;
+        time_t until = e->duration_sec > 0 ? time(NULL) + e->duration_sec
+                                           : DURATION_INFINITE;
         switch_zone(e->zone, until);
         last_fired_minute = minute_of_day;
     }
@@ -187,7 +188,7 @@ static void tick_run_until(time_t now)
     if (run_until > 0 && now >= run_until && zone_any_active())
     {
         ESP_LOGI(TAG, "run-until reached - stopping zone");
-        switch_zone(ZONE_NONE, 0);
+        switch_zone(ZONE_NONE, DURATION_INFINITE);
         if (mode == MODE_MANUAL) trigger_manual_activity();
     }
 }
