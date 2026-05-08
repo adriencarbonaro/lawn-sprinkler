@@ -12,9 +12,6 @@
 
 static const char* TAG = "mqtt_discovery";
 
-#define XSTR(x) #x
-#define STR(x) XSTR(x)
-
 #define DISCOVERY_PREFIX "homeassistant"
 #define DISCOVERY_TOPIC DISCOVERY_PREFIX "/device/" DEVICE_ID "/config"
 
@@ -83,25 +80,25 @@ static const char* TAG = "mqtt_discovery";
     "\""                                     \
     "}"
 
-#define DURATION_COMPONENT                                  \
-    "\"" DEVICE_ID "_" DURATION_ID                          \
-    "\":{"                                                  \
-    "\"platform\":\"select\","                              \
-    "\"name\":\"" DURATION_NAME                             \
-    "\","                                                   \
-    "\"unique_id\":\"" DEVICE_ID "_" DURATION_ID            \
-    "\","                                                   \
-    "\"object_id\":\"" DEVICE_ID "_" DURATION_ID            \
-    "\","                                                   \
-    "\"command_topic\":\"" T_DURATION_SET                   \
-    "\","                                                   \
-    "\"state_topic\":\"" T_DURATION_STATE                   \
-    "\","                                                   \
-    "\"options\":[\"" DURATION_0_STR "\",\"" DURATION_1_STR \
-    "\",\"" DURATION_2_STR "\",\"" DURATION_3_STR           \
-    "\"],"                                                  \
-    "\"icon\":\"" DURATION_ICON                             \
-    "\""                                                    \
+#define DURATION_COMPONENT                           \
+    "\"" DEVICE_ID "_" DURATION_ID                   \
+    "\":{"                                           \
+    "\"platform\":\"number\","                       \
+    "\"name\":\"" DURATION_NAME                      \
+    "\","                                            \
+    "\"unique_id\":\"" DEVICE_ID "_" DURATION_ID     \
+    "\","                                            \
+    "\"object_id\":\"" DEVICE_ID "_" DURATION_ID     \
+    "\","                                            \
+    "\"command_topic\":\"" T_DURATION_SET            \
+    "\","                                            \
+    "\"state_topic\":\"" T_DURATION_STATE            \
+    "\","                                            \
+    "\"min\":0,\"max\":3600,\"step\":60,"            \
+    "\"unit_of_measurement\":\"s\","                 \
+    "\"mode\":\"box\","                              \
+    "\"icon\":\"" DURATION_ICON                      \
+    "\""                                             \
     "}"
 
 #define VERSION_COMPONENT                 \

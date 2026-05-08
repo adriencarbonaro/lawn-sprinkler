@@ -39,22 +39,6 @@ typedef struct
     controller_mode_t mode;
 } event_t;
 
-typedef enum
-{
-    DURATION_0 = CONFIG_DURATION_0,
-    DURATION_1 = CONFIG_DURATION_1,
-    DURATION_2 = CONFIG_DURATION_2,
-    DURATION_3 = CONFIG_DURATION_3,
-} duration_t;
-
-static const char* duration_str[] = {
-    [DURATION_0] = DURATION_0_STR,
-    [DURATION_1] = DURATION_1_STR,
-    [DURATION_2] = DURATION_2_STR,
-    [DURATION_3] = DURATION_3_STR,
-};
-
-#define DURATION_DEFAULT DURATION_0
 #define DURATION_INFINITE 0
 
 /* State
@@ -65,7 +49,7 @@ static const char* TAG = "controller";
 static QueueHandle_t queue = NULL;
 
 static controller_mode_t mode = MODE_AUTO;
-static duration_t duration = DURATION_DEFAULT;
+static uint32_t duration = DEFAULT_DURATION_SEC;
 static int16_t last_fired_minute = -1; /* hour*60+minute, dedup auto fires */
 
 static TimerHandle_t idle_timer = NULL;
@@ -74,10 +58,7 @@ static TimerHandle_t run_timer = NULL;
 /* Helpers *******************************************************************/
 
 static void publish_mode(void) { mqtt_publish_mode(mode_str[mode]); }
-static void publish_duration(void)
-{
-    mqtt_publish_duration(duration_str[duration]);
-}
+static void publish_duration(void) { mqtt_publish_duration(duration); }
 
 static void publish_zone_states(uint8_t prev_zone, uint8_t new_zone)
 {
@@ -197,19 +178,8 @@ static void handle_set_mode(controller_mode_t new_mode)
 
 static void handle_set_duration(uint32_t sec)
 {
-    switch (sec)
-    {
-        case DURATION_0:
-        case DURATION_1:
-        case DURATION_2:
-        case DURATION_3:
-            duration = (duration_t)sec;
-            ESP_LOGI(TAG, "duration -> %us", (unsigned)sec);
-            break;
-        default:
-            ESP_LOGW(TAG, "duration: rejected %us", (unsigned)sec);
-            break;
-    }
+    duration = sec;
+    ESP_LOGI(TAG, "duration -> %us", (unsigned)sec);
     publish_duration();
 }
 

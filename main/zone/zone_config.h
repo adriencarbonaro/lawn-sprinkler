@@ -9,10 +9,8 @@
 /* After this much idle time in MANUAL with no zone active, return to AUTO */
 #define AUTO_MODE_RESET_TIME_MIN CONFIG_AUTO_MODE_RESET_TIME_MIN
 
-#define DURATION_0_STR STR(CONFIG_DURATION_0)
-#define DURATION_1_STR STR(CONFIG_DURATION_1)
-#define DURATION_2_STR STR(CONFIG_DURATION_2)
-#define DURATION_3_STR STR(CONFIG_DURATION_3)
+/* Duration applied to a manual button press, in seconds. 0 = no auto-stop. */
+#define DEFAULT_DURATION_SEC CONFIG_DEFAULT_DURATION_SEC
 
 #define GPIO_ZONE_1 CONFIG_GPIO_ZONE_1
 #define GPIO_ZONE_2 CONFIG_GPIO_ZONE_2

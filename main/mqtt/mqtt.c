@@ -80,9 +80,11 @@ void mqtt_publish_mode(const char* mode_str)
     mqtt_publish(T_MODE_STATE, mode_str, 1);
 }
 
-void mqtt_publish_duration(const char* duration_str)
+void mqtt_publish_duration(uint32_t duration_sec)
 {
-    mqtt_publish(T_DURATION_STATE, duration_str, 1);
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%u", (unsigned)duration_sec);
+    mqtt_publish(T_DURATION_STATE, buf, 1);
 }
 
 void mqtt_publish_zone_state(uint8_t zone, bool on)

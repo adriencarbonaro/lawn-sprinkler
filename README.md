@@ -375,7 +375,7 @@ The payload describes the device once and lists every component nested under
 `components`:
 
 - `mode` - select (`AUTO` / `MANUAL`)
-- `duration` - select (configured `DURATION_0..3` values, in seconds)
+- `duration` - number (`0..3600` seconds, `step=60`) — default applied to a manual button press;
 - `zone_0` ... `zone_5` - one switch per zone
 - `version` - diagnostic sensor (firmware version + short build id)
 

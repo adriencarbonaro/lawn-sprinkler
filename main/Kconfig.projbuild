@@ -46,21 +46,9 @@ config NTP_TZ
     default "CET-1CEST,M3.5.0/2,M10.5.0/3"
 
 # Sprinkler specific
-config DURATION_0
-    int "Watering duration index 0"
-    default 5
-
-config DURATION_1
-    int "Watering duration index 1"
-    default 10
-
-config DURATION_2
-    int "Watering duration index 2"
-    default 15
-
-config DURATION_3
-    int "Watering duration index 3"
-    default 30
+config DEFAULT_DURATION_SEC
+    int "Default watering duration applied to a button press (seconds, 0 = no auto-stop)"
+    default 600
 
 config AUTO_MODE_RESET_TIME_MIN
     int "Timer before going back to AUTO mode if idle in MANUAL mode"
