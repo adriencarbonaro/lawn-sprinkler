@@ -15,11 +15,7 @@
 #include <string.h>
 #include <time.h>
 
-/* Tunables ******************************************************************/
-
-/* After this much idle time in MANUAL with no zone active, return to AUTO.
- * Change here if the spec evolves. */
-#define MANUAL_AUTORETURN_SEC (30 * 60)
+#define AUTO_MODE_RESET_TIME_MS (AUTO_MODE_RESET_TIME_MIN))
 
 #define TICK_MS 500
 
@@ -96,9 +92,15 @@ static void update_idle_timer(void)
 {
     if (!idle_timer) return;
     if (mode == MODE_MANUAL && !zone_any_active())
+    {
+        ESP_LOGI(TAG, "Starting idle timer (%u min)", AUTO_MODE_RESET_TIME_MIN);
         xTimerReset(idle_timer, 0);
+    }
     else
+    {
+        ESP_LOGI(TAG, "Stoping idle timer");
         xTimerStop(idle_timer, 0);
+    }
 }
 
 static void idle_timer_cb(TimerHandle_t t)
@@ -289,11 +291,12 @@ static void task(void* arg)
 void controller_init(void)
 {
     queue = xQueueCreate(16, sizeof(event_t));
-    idle_timer = xTimerCreate("manual_idle",
-                              pdMS_TO_TICKS(MANUAL_AUTORETURN_SEC * 1000),
-                              pdFALSE,
-                              NULL,
-                              idle_timer_cb);
+    idle_timer =
+        xTimerCreate("manual_idle",
+                     pdMS_TO_TICKS(TO_MS(TO_SEC(AUTO_MODE_RESET_TIME_MIN))),
+                     pdFALSE,
+                     NULL,
+                     idle_timer_cb);
     run_timer = xTimerCreate("zone_run",
                              pdMS_TO_TICKS(1000),
                              pdFALSE,

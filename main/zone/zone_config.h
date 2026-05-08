@@ -6,6 +6,9 @@
 #define ZONE_ACTIVE_LEVEL 1
 #define ZONE_COUNT 6
 
+/* After this much idle time in MANUAL with no zone active, return to AUTO */
+#define AUTO_MODE_RESET_TIME_MIN CONFIG_AUTO_MODE_RESET_TIME_MIN
+
 #define DURATION_0_STR STR(CONFIG_DURATION_0)
 #define DURATION_1_STR STR(CONFIG_DURATION_1)
 #define DURATION_2_STR STR(CONFIG_DURATION_2)

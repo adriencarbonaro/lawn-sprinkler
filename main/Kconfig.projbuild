@@ -66,6 +66,10 @@ config DURATION_3
     int "Watering duration index 3"
     default 30
 
+config AUTO_MODE_RESET_TIME_MIN
+    int "Timer before going back to AUTO mode if idle in MANUAL mode"
+    default 30
+
 # GPIO -------------------------------------------------------------------------
 
 config GPIO_BTN_ZONE_1

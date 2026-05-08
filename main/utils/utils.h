@@ -9,4 +9,7 @@
 #define HI_BYTE(x) ((x) >> 8) & 0xff
 #define LO_BYTE(x) (x) & 0xff
 
+#define TO_SEC(min) (min) * 60
+#define TO_MS(secs) (secs) * 1000
+
 #endif /* UTILS_H_ */
