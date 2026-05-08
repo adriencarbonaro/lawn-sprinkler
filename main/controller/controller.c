@@ -4,6 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
+#include "freertos/timers.h"
 #include "mqtt.h"
 #include "schedule.h"
 #include "sntp.h"
@@ -69,8 +70,9 @@ static QueueHandle_t queue = NULL;
 static controller_mode_t mode = MODE_AUTO;
 static duration_t duration = DURATION_DEFAULT;
 static time_t run_until = DURATION_DEFAULT;
-static time_t last_manual_event = 0;
 static int16_t last_fired_minute = -1; /* hour*60+minute, dedup auto fires */
+
+static TimerHandle_t idle_timer = NULL;
 
 /* Helpers *******************************************************************/
 
@@ -89,6 +91,21 @@ static void publish_zone_states(uint8_t prev_zone, uint8_t new_zone)
     }
 }
 
+static void update_idle_timer(void)
+{
+    if (!idle_timer) return;
+    if (mode == MODE_MANUAL && !zone_any_active())
+        xTimerReset(idle_timer, 0);
+    else
+        xTimerStop(idle_timer, 0);
+}
+
+static void idle_timer_cb(TimerHandle_t t)
+{
+    event_t ev = {.id = EV_SET_MODE, .mode = MODE_AUTO};
+    xQueueSend(queue, &ev, 0);
+}
+
 static void switch_zone(uint8_t new_zone, uint32_t duration)
 {
     if (new_zone != ZONE_NONE)
@@ -97,6 +114,7 @@ static void switch_zone(uint8_t new_zone, uint32_t duration)
     zone_set_active(new_zone);
     run_until = (duration > 0) ? (time(NULL) + duration) : 0;
     publish_zone_states(prev, new_zone);
+    update_idle_timer();
 }
 
 static void stop_all_zones(void) { switch_zone(ZONE_NONE, DURATION_INFINITE); }
@@ -107,12 +125,10 @@ static void switch_mode(controller_mode_t new_mode)
     mode = new_mode;
     ESP_LOGI(TAG, "Switching to mode %s", mode_str[mode]);
     publish_mode();
+    update_idle_timer();
 }
 
-static inline void trigger_manual_activity(void)
-{
-    last_manual_event = time(NULL);
-}
+static inline void trigger_manual_activity(void) { update_idle_timer(); }
 
 /* Event handlers ************************************************************/
 
@@ -205,25 +221,12 @@ static void tick_auto(const struct tm* lt)
     }
 }
 
-static void tick_manual(time_t now)
-{
-    /* 30-min auto-return: only counts while no zone is running. Change the
-     * condition below if the spec evolves (e.g. always count). */
-    if (!zone_any_active() &&
-        (now - last_manual_event) >= MANUAL_AUTORETURN_SEC)
-    {
-        ESP_LOGI(TAG, "manual idle timeout - returning to AUTO");
-        switch_mode(MODE_AUTO);
-    }
-}
-
 static void tick_run_until(time_t now)
 {
     if (run_until > 0 && now >= run_until && zone_any_active())
     {
         ESP_LOGI(TAG, "Stopping zones (timer reached)");
         stop_all_zones();
-        if (mode == MODE_MANUAL) trigger_manual_activity();
     }
 }
 
@@ -232,15 +235,14 @@ static void tick(void)
     if (!time_sync_ready()) return;
 
     time_t now = time(NULL);
-    struct tm lt;
-    localtime_r(&now, &lt);
-
     tick_run_until(now);
 
     if (mode == MODE_AUTO)
+    {
+        struct tm lt;
+        localtime_r(&now, &lt);
         tick_auto(&lt);
-    else
-        tick_manual(now);
+    }
 }
 
 /* Task **********************************************************************/
@@ -280,7 +282,11 @@ static void task(void* arg)
 void controller_init(void)
 {
     queue = xQueueCreate(16, sizeof(event_t));
-    last_manual_event = time(NULL);
+    idle_timer = xTimerCreate("manual_idle",
+                              pdMS_TO_TICKS(MANUAL_AUTORETURN_SEC * 1000),
+                              pdFALSE,
+                              NULL,
+                              idle_timer_cb);
     xTaskCreate(task, "controller", 4096, NULL, tskIDLE_PRIORITY + 1, NULL);
 }
 
