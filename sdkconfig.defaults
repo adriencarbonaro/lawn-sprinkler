@@ -1,2 +1,6 @@
 # default UART baudrate so monitor prints at 115200
 CONFIG_ESP_CONSOLE_UART_BAUDRATE=115200
+
+# 1.5 MB app partition (default 1 MB was getting tight)
+CONFIG_PARTITION_TABLE_SINGLE_APP=n
+CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y
