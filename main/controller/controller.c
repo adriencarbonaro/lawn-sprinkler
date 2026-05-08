@@ -32,6 +32,7 @@ typedef enum
     EV_MANUAL_STOP,
     EV_SET_MODE,
     EV_SET_DURATION,
+    EV_RUN_EXPIRED,
 } event_id_t;
 
 typedef struct
@@ -69,10 +70,10 @@ static QueueHandle_t queue = NULL;
 
 static controller_mode_t mode = MODE_AUTO;
 static duration_t duration = DURATION_DEFAULT;
-static time_t run_until = DURATION_DEFAULT;
 static int16_t last_fired_minute = -1; /* hour*60+minute, dedup auto fires */
 
 static TimerHandle_t idle_timer = NULL;
+static TimerHandle_t run_timer = NULL;
 
 /* Helpers *******************************************************************/
 
@@ -106,13 +107,28 @@ static void idle_timer_cb(TimerHandle_t t)
     xQueueSend(queue, &ev, 0);
 }
 
+static void update_run_timer(uint32_t duration_sec)
+{
+    if (!run_timer) return;
+    if (duration_sec > 0)
+        xTimerChangePeriod(run_timer, pdMS_TO_TICKS(1000) * duration_sec, 0);
+    else
+        xTimerStop(run_timer, 0);
+}
+
+static void run_timer_cb(TimerHandle_t t)
+{
+    event_t ev = {.id = EV_RUN_EXPIRED};
+    xQueueSend(queue, &ev, 0);
+}
+
 static void switch_zone(uint8_t new_zone, uint32_t duration)
 {
     if (new_zone != ZONE_NONE)
         ESP_LOGI(TAG, "Switching to zone %u for %u secs", new_zone, duration);
     uint8_t prev = zone_get_active();
     zone_set_active(new_zone);
-    run_until = (duration > 0) ? (time(NULL) + duration) : 0;
+    update_run_timer(duration);
     publish_zone_states(prev, new_zone);
     update_idle_timer();
 }
@@ -201,6 +217,13 @@ static void handle_set_duration(uint32_t sec)
     publish_duration();
 }
 
+static void handle_run_expired(void)
+{
+    if (!zone_any_active()) return;
+    ESP_LOGI(TAG, "Stopping zones (timer reached)");
+    stop_all_zones();
+}
+
 /* Periodic logic ************************************************************/
 
 static void tick_auto(const struct tm* lt)
@@ -221,28 +244,15 @@ static void tick_auto(const struct tm* lt)
     }
 }
 
-static void tick_run_until(time_t now)
-{
-    if (run_until > 0 && now >= run_until && zone_any_active())
-    {
-        ESP_LOGI(TAG, "Stopping zones (timer reached)");
-        stop_all_zones();
-    }
-}
-
 static void tick(void)
 {
     if (!time_sync_ready()) return;
+    if (mode != MODE_AUTO) return;
 
     time_t now = time(NULL);
-    tick_run_until(now);
-
-    if (mode == MODE_AUTO)
-    {
-        struct tm lt;
-        localtime_r(&now, &lt);
-        tick_auto(&lt);
-    }
+    struct tm lt;
+    localtime_r(&now, &lt);
+    tick_auto(&lt);
 }
 
 /* Task **********************************************************************/
@@ -271,6 +281,9 @@ static void task(void* arg)
                 case EV_SET_DURATION:
                     handle_set_duration(ev.duration_sec);
                     break;
+                case EV_RUN_EXPIRED:
+                    handle_run_expired();
+                    break;
             }
         }
         tick();
@@ -287,6 +300,11 @@ void controller_init(void)
                               pdFALSE,
                               NULL,
                               idle_timer_cb);
+    run_timer = xTimerCreate("zone_run",
+                             pdMS_TO_TICKS(1000),
+                             pdFALSE,
+                             NULL,
+                             run_timer_cb);
     xTaskCreate(task, "controller", 4096, NULL, tskIDLE_PRIORITY + 1, NULL);
 }
 
