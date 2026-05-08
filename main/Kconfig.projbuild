@@ -17,10 +17,6 @@ config MQTT_TOPIC_PREFIX
     string "MQTT topic prefix (must end with '/')"
     default "lawn-sprinkler/"
 
-config MQTT_TOPIC_VERSION
-    string "MQTT version topic name"
-    default "version"
-
 # Device identity --------------------------------------------------------------
 
 config DEVICE_ID

@@ -8,7 +8,7 @@
 #define T_BASE MQTT_TOPIC_PREFIX
 
 #define T_AVAIL T_BASE "availability"
-#define T_VERSION T_BASE MQTT_TOPIC_VERSION
+#define T_VERSION T_BASE "version"
 
 #define T_SET_KEYWORD "set"
 #define T_STATE_KEYWORD "state"
