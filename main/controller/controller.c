@@ -184,7 +184,7 @@ static void handle_manual_stop(uint8_t zone)
     uint8_t active = zone_get_active();
     if (zone == ZONE_NONE || active == zone)
     {
-        switch_zone(ZONE_NONE, DURATION_INFINITE);
+        stop_all_zones();
     }
 }
 
@@ -192,7 +192,7 @@ static void handle_set_mode(controller_mode_t new_mode)
 {
     if (new_mode == MODE_AUTO)
     {
-        switch_zone(ZONE_NONE, DURATION_INFINITE);
+        stop_all_zones();
         last_fired_minute = -1;
     }
     switch_mode(new_mode);
