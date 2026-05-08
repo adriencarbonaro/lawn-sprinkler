@@ -144,8 +144,6 @@ static void switch_mode(controller_mode_t new_mode)
     update_idle_timer();
 }
 
-static inline void trigger_manual_activity(void) { update_idle_timer(); }
-
 /* Event handlers ************************************************************/
 
 static void handle_button(uint8_t zone)
@@ -153,7 +151,6 @@ static void handle_button(uint8_t zone)
     if (zone >= ZONE_COUNT) return;
 
     switch_mode(MODE_MANUAL);
-    trigger_manual_activity();
 
     uint8_t active = zone_get_active();
     if (active == zone)
@@ -171,7 +168,6 @@ static void handle_manual_start(uint8_t zone, uint32_t duration_sec)
     if (zone >= ZONE_COUNT) return;
 
     switch_mode(MODE_MANUAL);
-    trigger_manual_activity();
 
     switch_zone(zone, duration_sec);
 }
@@ -179,7 +175,6 @@ static void handle_manual_start(uint8_t zone, uint32_t duration_sec)
 static void handle_manual_stop(uint8_t zone)
 {
     switch_mode(MODE_MANUAL);
-    trigger_manual_activity();
 
     uint8_t active = zone_get_active();
     if (zone == ZONE_NONE || active == zone)
@@ -196,7 +191,6 @@ static void handle_set_mode(controller_mode_t new_mode)
         last_fired_minute = -1;
     }
     switch_mode(new_mode);
-    if (new_mode == MODE_MANUAL) trigger_manual_activity();
 }
 
 static void handle_set_duration(uint32_t sec)
