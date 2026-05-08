@@ -56,7 +56,7 @@ static void publish_schedule_state(void)
         cJSON_AddNumberToObject(o, "hour", e->hour);
         cJSON_AddNumberToObject(o, "minute", e->minute);
         cJSON_AddNumberToObject(o, "dow", e->dow_mask);
-        cJSON_AddNumberToObject(o, "duration", e->duration_sec);
+        cJSON_AddNumberToObject(o, "duration", e->duration_min);
         cJSON_AddBoolToObject(o, "enabled", e->enabled);
         cJSON_AddItemToArray(arr, o);
     }
@@ -129,7 +129,7 @@ static void handle_schedule_set(const char* msg, int msg_len)
         e->hour = (uint8_t)hour->valueint;
         e->minute = (uint8_t)minute->valueint;
         e->dow_mask = (uint8_t)dow->valueint;
-        e->duration_sec = (uint16_t)dur->valueint;
+        e->duration_min = (uint16_t)dur->valueint;
         e->enabled = en ? cJSON_IsTrue(en) : true;
     }
 
@@ -140,8 +140,6 @@ static void handle_schedule_set(const char* msg, int msg_len)
     publish_schedule_state();
 }
 
-/* Extract the zone index from a topic suffix like "0/set" or "12/run".
- * Returns 0xff on parse error. *suffix_out is set to the part after '/'. */
 static uint8_t parse_zone_topic(const char* sub,
                                 int sub_len,
                                 const char** suffix_out,
@@ -179,17 +177,6 @@ static void handle_zone_topic(const char* sub,
             controller_on_button(zone);
         else
             ESP_LOGW(TAG, "zone %u set: unknown payload", zone);
-    }
-    else if (suffix_len == 3 && memcmp(suffix, "run", 3) == 0)
-    {
-        char buf[16] = {0};
-        int n = MIN(msg_len, (int)sizeof(buf) - 1);
-        memcpy(buf, msg, n);
-        long secs = strtol(buf, NULL, 10);
-        if (secs > 0)
-            controller_manual_start(zone, (uint32_t)secs);
-        else
-            controller_manual_stop(zone);
     }
 }
 
@@ -232,7 +219,6 @@ void mqtt_topics_subscribe(esp_mqtt_client_handle_t c)
     esp_mqtt_client_subscribe(c, T_DURATION_SET, 1);
     esp_mqtt_client_subscribe(c, T_SCHED_SET, 1);
     esp_mqtt_client_subscribe(c, T_ZONE_PREFIX "+/set", 1);
-    esp_mqtt_client_subscribe(c, T_ZONE_PREFIX "+/run", 1);
 
     /* Re-publish current schedule on connect. */
     publish_schedule_state();

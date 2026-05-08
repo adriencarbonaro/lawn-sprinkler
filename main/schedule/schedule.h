@@ -23,7 +23,7 @@ typedef struct
     uint8_t hour;          /* 0..23 */
     uint8_t minute;        /* 0..59 */
     uint8_t dow_mask;      /* DOW_* bitmask */
-    uint16_t duration_sec; /* watering duration in seconds */
+    uint16_t duration_min; /* watering duration in minutes */
 } schedule_entry_t;
 
 typedef struct

@@ -24,8 +24,6 @@
 typedef enum
 {
     EV_BUTTON,
-    EV_MANUAL_START,
-    EV_MANUAL_STOP,
     EV_SET_MODE,
     EV_SET_DURATION,
     EV_RUN_EXPIRED,
@@ -35,7 +33,7 @@ typedef struct
 {
     event_id_t id;
     uint8_t zone;
-    uint32_t duration_sec;
+    uint32_t duration_min;
     controller_mode_t mode;
 } event_t;
 
@@ -49,7 +47,7 @@ static const char* TAG = "controller";
 static QueueHandle_t queue = NULL;
 
 static controller_mode_t mode = MODE_AUTO;
-static uint32_t duration = DEFAULT_DURATION_SEC;
+static uint32_t duration_min = DEFAULT_DURATION_MIN;
 static int16_t last_fired_minute = -1; /* hour*60+minute, dedup auto fires */
 
 static TimerHandle_t idle_timer = NULL;
@@ -58,7 +56,7 @@ static TimerHandle_t run_timer = NULL;
 /* Helpers *******************************************************************/
 
 static void publish_mode(void) { mqtt_publish_mode(mode_str[mode]); }
-static void publish_duration(void) { mqtt_publish_duration(duration); }
+static void publish_duration(void) { mqtt_publish_duration(duration_min); }
 
 static void publish_zone_states(uint8_t prev_zone, uint8_t new_zone)
 {
@@ -90,11 +88,13 @@ static void idle_timer_cb(TimerHandle_t t)
     xQueueSend(queue, &ev, 0);
 }
 
-static void update_run_timer(uint32_t duration_sec)
+static void update_run_timer(uint32_t duration_min)
 {
     if (!run_timer) return;
-    if (duration_sec > 0)
-        xTimerChangePeriod(run_timer, pdMS_TO_TICKS(1000) * duration_sec, 0);
+    if (duration_min > 0)
+        xTimerChangePeriod(run_timer,
+                           pdMS_TO_TICKS(1000 * TO_SEC(duration_min)),
+                           0);
     else
         xTimerStop(run_timer, 0);
 }
@@ -105,13 +105,16 @@ static void run_timer_cb(TimerHandle_t t)
     xQueueSend(queue, &ev, 0);
 }
 
-static void switch_zone(uint8_t new_zone, uint32_t duration)
+static void switch_zone(uint8_t new_zone, uint32_t duration_min)
 {
     if (new_zone != ZONE_NONE)
-        ESP_LOGI(TAG, "Switching to zone %u for %u secs", new_zone, duration);
+        ESP_LOGI(TAG,
+                 "Switching to zone %u for %u min",
+                 new_zone,
+                 duration_min);
     uint8_t prev = zone_get_active();
     zone_set_active(new_zone);
-    update_run_timer(duration);
+    update_run_timer(duration_min);
     publish_zone_states(prev, new_zone);
     update_idle_timer();
 }
@@ -142,27 +145,7 @@ static void handle_button(uint8_t zone)
     }
     else
     {
-        switch_zone(zone, duration);
-    }
-}
-
-static void handle_manual_start(uint8_t zone, uint32_t duration_sec)
-{
-    if (zone >= ZONE_COUNT) return;
-
-    switch_mode(MODE_MANUAL);
-
-    switch_zone(zone, duration_sec);
-}
-
-static void handle_manual_stop(uint8_t zone)
-{
-    switch_mode(MODE_MANUAL);
-
-    uint8_t active = zone_get_active();
-    if (zone == ZONE_NONE || active == zone)
-    {
-        stop_all_zones();
+        switch_zone(zone, duration_min);
     }
 }
 
@@ -176,10 +159,10 @@ static void handle_set_mode(controller_mode_t new_mode)
     switch_mode(new_mode);
 }
 
-static void handle_set_duration(uint32_t sec)
+static void handle_set_duration(uint32_t min)
 {
-    duration = sec;
-    ESP_LOGI(TAG, "duration -> %us", (unsigned)sec);
+    duration_min = min;
+    ESP_LOGI(TAG, "duration -> %u min", (unsigned)min);
     publish_duration();
 }
 
@@ -202,10 +185,10 @@ static void tick_auto(const struct tm* lt)
     if (e)
     {
         ESP_LOGI(TAG,
-                 "auto fire: zone=%u duration=%us",
+                 "auto fire: zone=%u duration=%u min",
                  e->zone,
-                 e->duration_sec);
-        switch_zone(e->zone, e->duration_sec);
+                 e->duration_min);
+        switch_zone(e->zone, (uint32_t)e->duration_min);
         last_fired_minute = minute_of_day;
     }
 }
@@ -235,17 +218,11 @@ static void task(void* arg)
                 case EV_BUTTON:
                     handle_button(ev.zone);
                     break;
-                case EV_MANUAL_START:
-                    handle_manual_start(ev.zone, ev.duration_sec);
-                    break;
-                case EV_MANUAL_STOP:
-                    handle_manual_stop(ev.zone);
-                    break;
                 case EV_SET_MODE:
                     handle_set_mode(ev.mode);
                     break;
                 case EV_SET_DURATION:
-                    handle_set_duration(ev.duration_sec);
+                    handle_set_duration(ev.duration_min);
                     break;
                 case EV_RUN_EXPIRED:
                     handle_run_expired();
@@ -287,23 +264,9 @@ void controller_set_mode(controller_mode_t new_mode)
     xQueueSend(queue, &ev, 0);
 }
 
-void controller_set_duration(uint32_t duration_sec)
+void controller_set_duration(uint32_t duration_min)
 {
-    event_t ev = {.id = EV_SET_DURATION, .duration_sec = duration_sec};
-    xQueueSend(queue, &ev, 0);
-}
-
-void controller_manual_start(uint8_t zone, uint32_t duration_sec)
-{
-    event_t ev = {.id = EV_MANUAL_START,
-                  .zone = zone,
-                  .duration_sec = duration_sec};
-    xQueueSend(queue, &ev, 0);
-}
-
-void controller_manual_stop(uint8_t zone)
-{
-    event_t ev = {.id = EV_MANUAL_STOP, .zone = zone};
+    event_t ev = {.id = EV_SET_DURATION, .duration_min = duration_min};
     xQueueSend(queue, &ev, 0);
 }
 

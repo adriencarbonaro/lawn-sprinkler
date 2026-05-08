@@ -23,6 +23,5 @@
 #define T_SCHED_SET T_BASE "schedule/" T_SET_KEYWORD
 
 #define T_ZONE_PREFIX T_BASE "zone/"
-/* Per-zone leaves: zone/<n>/state, zone/<n>/set, zone/<n>/run */
 
 #endif /* MQTT_TOPICS_INTERNAL_H_ */

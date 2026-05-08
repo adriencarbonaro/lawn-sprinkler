@@ -330,20 +330,19 @@ With `MQTT_TOPIC_PREFIX = "lawn-sprinkler/"`:
 
 ### Subscribed (HA -> device)
 
-| Topic                         | Payload                | Effect                                        |
-| ----------------------------- | ---------------------- | --------------------------------------------- |
-| `lawn-sprinkler/mode/set`     | `AUTO` \| `MANUAL`     | Switch mode                                   |
-| `lawn-sprinkler/duration/set` | seconds (e.g. `30`)    | Set MANUAL duration                           |
-| `lawn-sprinkler/zone/<n>/set` | `ON` \| `OFF`          | Start zone / stop zone                        |
-| `lawn-sprinkler/zone/<n>/run` | seconds (e.g. `600`)   | Start zone with timeout (`0` or empty = stop) |
-| `lawn-sprinkler/schedule/set` | JSON array (see below) | Replace schedule, persist to NVS              |
+| Topic                         | Payload                | Effect                                         |
+| ----------------------------- | ---------------------- | ---------------------------------------------- |
+| `lawn-sprinkler/mode/set`     | `AUTO` \| `MANUAL`     | Switch mode                                    |
+| `lawn-sprinkler/duration/set` | minutes (e.g. `10`)    | Set MANUAL default duration                    |
+| `lawn-sprinkler/zone/<n>/set` | `ON` \| `OFF`          | Toggle zone (uses the current MANUAL duration) |
+| `lawn-sprinkler/schedule/set` | JSON array (see below) | Replace schedule, persist to NVS               |
 
 ### Published (device -> HA), retained
 
 | Topic                           | Payload                    |
 | ------------------------------- | -------------------------- |
 | `lawn-sprinkler/mode/state`     | `AUTO` \| `MANUAL`         |
-| `lawn-sprinkler/duration/state` | seconds (e.g. `30`)        |
+| `lawn-sprinkler/duration/state` | minutes (e.g. `10`)        |
 | `lawn-sprinkler/zone/<n>/state` | `ON` \| `OFF`              |
 | `lawn-sprinkler/schedule/state` | JSON array (see below)     |
 | `lawn-sprinkler/availability`   | `online` (LWT: `offline`)  |
@@ -353,15 +352,15 @@ With `MQTT_TOPIC_PREFIX = "lawn-sprinkler/"`:
 
 ```json
 [
-  {"zone": 0, "hour": 6,  "minute": 30, "dow": 127, "duration": 600, "enabled": true},
-  {"zone": 3, "hour": 21, "minute": 0,  "dow": 42,  "duration": 900, "enabled": true}
+  {"zone": 0, "hour": 6,  "minute": 30, "dow": 127, "duration_min": 10, "enabled": true},
+  {"zone": 3, "hour": 21, "minute": 0,  "dow": 42,  "duration_min": 15, "enabled": true}
 ]
 ```
 
 - `zone`: 0..5
 - `hour`: 0..23, `minute`: 0..59 (local time, after SNTP sync)
 - `dow`: bitmask of days, **bit 0 = Sunday** ... bit 6 = Saturday (`127` = every day)
-- `duration`: seconds
+- `duration_min`: duration of watering
 - `enabled`: optional, defaults to `true`
 
 ### Home Assistant discovery
@@ -375,7 +374,7 @@ The payload describes the device once and lists every component nested under
 `components`:
 
 - `mode` - select (`AUTO` / `MANUAL`)
-- `duration` - number (`0..3600` seconds, `step=60`) — default applied to a manual button press;
+- `duration` - number (`0..60` minutes, `step=1`) — default applied to a manual button press
 - `zone_0` ... `zone_5` - one switch per zone
 - `version` - diagnostic sensor (firmware version + short build id)
 

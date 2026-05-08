@@ -94,8 +94,8 @@ static const char* TAG = "mqtt_discovery";
     "\","                                            \
     "\"state_topic\":\"" T_DURATION_STATE            \
     "\","                                            \
-    "\"min\":0,\"max\":3600,\"step\":60,"            \
-    "\"unit_of_measurement\":\"s\","                 \
+    "\"min\":0,\"max\":60,\"step\":1,"               \
+    "\"unit_of_measurement\":\"min\","               \
     "\"mode\":\"box\","                              \
     "\"icon\":\"" DURATION_ICON                      \
     "\""                                             \
