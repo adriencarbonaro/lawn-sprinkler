@@ -442,7 +442,7 @@ cards:
         tap_action:
           action: more-info
       - type: tile
-        entity: select.lawn_sprinkler_duration
+        entity: number.lawn_sprinkler_duration
         features_position: bottom
         vertical: false
         name: Duration
