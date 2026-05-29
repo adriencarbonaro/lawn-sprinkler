@@ -27,7 +27,7 @@ void controller_set_duration(uint32_t duration_min);
  * kept as a hook). */
 void controller_schedule_changed(void);
 
-/* Republish current mode + zone state. Called by mqtt.c after a (re)connect
+/* Republish current mode + zone state. Wired as the mqtt on-connect callback
  * so HA picks up the live state even if no retained messages are present. */
 void controller_publish_state(void);
 

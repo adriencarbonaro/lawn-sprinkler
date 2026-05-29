@@ -5,13 +5,14 @@
 #include "freertos/queue.h"
 #include "freertos/task.h"
 #include "freertos/timers.h"
-#include "mqtt.h"
+#include "ha.h"
 #include "schedule.h"
 #include "sntp.h"
 #include "utils.h"
 #include "zone.h"
 #include "zone_config.h"
 
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
 
@@ -55,15 +56,28 @@ static TimerHandle_t run_timer = NULL;
 
 /* Helpers *******************************************************************/
 
-static void publish_mode(void) { mqtt_publish_mode(mode_str[mode]); }
-static void publish_duration(void) { mqtt_publish_duration(duration_min); }
+static void publish_mode(void) { ha_publish("mode", mode_str[mode]); }
+
+static void publish_duration(void)
+{
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%u", (unsigned)duration_min);
+    ha_publish("duration", buf);
+}
+
+static void publish_zone_state(uint8_t zone, bool on)
+{
+    char id[16];
+    snprintf(id, sizeof(id), "zone_%u", zone);
+    ha_publish(id, on ? "ON" : "OFF");
+}
 
 static void publish_zone_states(uint8_t prev_zone, uint8_t new_zone)
 {
     if (prev_zone != new_zone)
     {
-        if (prev_zone != ZONE_NONE) mqtt_publish_zone_state(prev_zone, false);
-        if (new_zone != ZONE_NONE) mqtt_publish_zone_state(new_zone, true);
+        if (prev_zone != ZONE_NONE) publish_zone_state(prev_zone, false);
+        if (new_zone != ZONE_NONE) publish_zone_state(new_zone, true);
     }
 }
 
@@ -283,7 +297,7 @@ void controller_publish_state(void)
     /* Publish all zones' current state (the inactive ones as OFF). */
     for (uint8_t i = 0; i < ZONE_COUNT; i++)
     {
-        mqtt_publish_zone_state(i, i == z);
+        publish_zone_state(i, i == z);
     }
 }
 

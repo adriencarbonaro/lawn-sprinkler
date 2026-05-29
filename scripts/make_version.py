@@ -9,7 +9,7 @@ VERSION_FILE   = sys.argv[1]
 REPO_PATH      = sys.argv[2]
 
 # Regex patterns
-SEMVER_PATTERN = "^v(?P<semver>(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)$"
+SEMVER_PATTERN = r'^v(?P<semver>(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)$'
 DIRTY_PATTERN  = "^.*dirty"
 COMMIT_GAP     = "^.*(?P<gap>[1-9]+)-g"
 
@@ -52,32 +52,25 @@ def makeVersion():
 
   DIRTY             = str(int(dirty_match != None))
 
+  DESCRIBE          = str(VERSION + " (" + build[:6] + ("-dirty" if DIRTY == "1" else "") + ")")
+
   if commit_match:
     GAP             = str(commit_match.group("gap") or "0")
   else:
     GAP             = "0"
 
-  print("Version: {} - {}".format(VERSION if VERSION else "0.0.0", build))
-
   header_content = """/** ---------------------------------------------------------
- * @file %s
- *
- * @warning Generated automatically -- DO NOT EDIT MANUALLY
- * @author  Adrien Carbonaro
- * ---------------------------------------------------------- */\n\n""" \
+* @file %s
+*
+* @warning Generated automatically -- DO NOT EDIT MANUALLY
+* @author  Adrien Carbonaro
+* ---------------------------------------------------------- */\n\n""" \
   %(os.path.basename(VERSION_FILE))
 
   core_template = """#ifndef VERSION_H_
 #define VERSION_H_
 
-#include <stdint.h>
-
-typedef struct
-{
-    uint8_t major;
-    uint8_t minor;
-    uint8_t patch;
-} app_version_t;
+#define DESCRIBE              "__DESCRIBE__"
 
 #define VERSION               "__VERSION__"
 #define BUILD_ID              "__BUILD_ID__"
@@ -97,6 +90,7 @@ typedef struct
 """
 
   core_content = core_template \
+    .replace("__DESCRIBE__", DESCRIBE) \
     .replace("__VERSION__", VERSION) \
     .replace("__BUILD_ID__", build) \
     .replace("__BUILD_ID_SHORT__", build[:6]) \
@@ -109,6 +103,8 @@ typedef struct
     .replace("__DIRTY__", DIRTY) \
 
   file_content = header_content + core_content
+
+  print("Version: {}".format(DESCRIBE))
 
   # read and check file is different
   os.makedirs(os.path.dirname(VERSION_FILE), exist_ok=True)

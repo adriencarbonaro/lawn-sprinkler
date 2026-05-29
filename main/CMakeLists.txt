@@ -1,13 +1,10 @@
 set(srcs
     main.c
+    ha_entities.c
     button/button.c
     controller/controller.c
-    mqtt/mqtt.c
-    mqtt/mqtt_discovery.c
-    mqtt/mqtt_topics.c
     schedule/schedule.c
-    wifi/sntp.c
-    wifi/wifi.c
+    sntp/sntp.c
     zone/zone.c
 )
 
@@ -16,19 +13,15 @@ idf_component_register(
     INCLUDE_DIRS "."
                  "button"
                  "controller"
-                 "mqtt"
                  "schedule"
+                 "sntp"
                  "utils"
-                 "wifi"
                  "zone"
     REQUIRES esp_driver_gpio
-             esp_wifi
              esp_netif
-             esp_event
              nvs_flash
-             mqtt
-             json
-             lwip
+             ha-mqtt
+             wifi
 )
 
 # Add build directory to resolve version.h
