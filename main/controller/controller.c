@@ -6,6 +6,7 @@
 #include "freertos/task.h"
 #include "freertos/timers.h"
 #include "ha.h"
+#include "led.h"
 #include "schedule.h"
 #include "sntp.h"
 #include "utils.h"
@@ -140,6 +141,7 @@ static void switch_mode(controller_mode_t new_mode)
     if (new_mode == mode) return;
     mode = new_mode;
     ESP_LOGI(TAG, "Switching to mode %s", mode_str[mode]);
+    led_set_auto_mode(mode == MODE_AUTO);
     publish_mode();
     update_idle_timer();
 }
@@ -263,6 +265,7 @@ void controller_init(void)
                              pdFALSE,
                              NULL,
                              run_timer_cb);
+    led_set_auto_mode(mode == MODE_AUTO);
     xTaskCreate(task, "controller", 4096, NULL, tskIDLE_PRIORITY + 1, NULL);
 }
 

@@ -12,4 +12,6 @@
 #define TO_SEC(min) (min) * 60
 #define TO_MS(secs) (secs) * 1000
 
+#define MIN(a, b) ((a) < (b)) ? a : b
+
 #endif /* UTILS_H_ */

@@ -1,0 +1,18 @@
+#ifndef LED_CONFIG_H_
+#define LED_CONFIG_H_
+
+#include "sdkconfig.h"
+
+#define LED_ACTIVE_LEVEL 1
+
+#define GPIO_LED_STATUS CONFIG_GPIO_LED_STATUS
+#define GPIO_LED_AUTO CONFIG_GPIO_LED_AUTO
+
+/* Status LED blink timings (milliseconds). */
+#define STATUS_LED_CONNECTED_ON_MS 100
+#define STATUS_LED_CONNECTED_PERIOD_MS 3000
+
+#define STATUS_LED_CONNECTING_ON_MS 100
+#define STATUS_LED_CONNECTING_OFF_MS 100
+
+#endif /* LED_CONFIG_H_ */

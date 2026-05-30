@@ -2,6 +2,7 @@
 #include "config.h"
 #include "controller.h"
 #include "ha_entities.h"
+#include "led.h"
 #include "mqtt.h"
 #include "schedule.h"
 #include "sntp.h"
@@ -17,10 +18,25 @@ static const ha_identity_t identity = {
     .version_str = DESCRIBE,
 };
 
-static void on_mqtt_connect(void) { controller_publish_state(); }
+static void on_wifi_connect(void) { mqtt_start(); }
+
+static void on_wifi_disconnect(void)
+{
+    /* Covers both retries and a sustained inability to connect. */
+    led_set_status(STATUS_LED_CONNECTING);
+}
+
+static void on_mqtt_connect(void)
+{
+    led_set_status(STATUS_LED_CONNECTED);
+    controller_publish_state();
+}
 
 void app_main(void)
 {
+    /* Status LED solid while we bring the device up. */
+    led_init();
+
     /* Init Home Assistant layer */
     uint16_t nb_entities = 0;
     const ha_entity_t* entities = get_entities(&nb_entities);
@@ -28,13 +44,15 @@ void app_main(void)
 
     mqtt_set_on_connect(on_mqtt_connect);
 
-    /* Init Wifi layer */
-    wifi_init(mqtt_start, NULL);
-    time_sync_init();
-
     /* User init */
     zone_init();
     controller_init();
     button_init();
+
+    /* Networking. wifi_init() also initialises NVS, which schedule_init()
+     * depends on, so it must come first. */
+    led_set_status(STATUS_LED_CONNECTING);
+    wifi_init(on_wifi_connect, on_wifi_disconnect);
     schedule_init();
+    time_sync_init();
 }

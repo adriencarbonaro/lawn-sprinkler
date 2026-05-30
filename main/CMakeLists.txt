@@ -3,6 +3,7 @@ set(srcs
     ha_entities.c
     button/button.c
     controller/controller.c
+    led/led.c
     schedule/schedule.c
     sntp/sntp.c
     zone/zone.c
@@ -13,6 +14,7 @@ idf_component_register(
     INCLUDE_DIRS "."
                  "button"
                  "controller"
+                 "led"
                  "schedule"
                  "sntp"
                  "utils"

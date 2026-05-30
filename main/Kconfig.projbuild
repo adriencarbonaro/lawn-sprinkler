@@ -87,4 +87,14 @@ config GPIO_ZONE_6
     int "Zone GPIO (zone 6)"
     default 23
 
+# Status LEDs ------------------------------------------------------------------
+
+config GPIO_LED_STATUS
+    int "Status LED GPIO"
+    default 2
+
+config GPIO_LED_AUTO
+    int "Auto-mode LED GPIO"
+    default 3
+
 endmenu
