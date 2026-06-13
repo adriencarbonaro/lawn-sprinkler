@@ -2,4 +2,12 @@
 
 lawn_sprinkler_ctl-backups
 
+hardware/lawn_sprinkler_gerbers.zip
+hardware/lawn_sprinkler_ctl/lawn_sprinkler_ctl -  BOM.xlsx
+hardware/lawn_sprinkler_ctl/lawn_sprinkler_ctl.csv
+hardware/lawn_sprinkler_ctl/lawn_sprinkler_ctl.pdf
+hardware/lawn_sprinkler_ctl/lawn_sprinkler_ctl.xml
 
+
+
+resource_test_prgms/
