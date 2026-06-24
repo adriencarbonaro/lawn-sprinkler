@@ -6,10 +6,12 @@
 	(paper "A4")
 	(title_block
 		(title "Lawn Sprinkler Controller")
-		(date "2026-05-15")
-		(rev "1.1")
+		(date "2026-06-15")
+		(rev "1.2")
+		(company "O & A.Carbonaro")
 		(comment 1 "1.0 : final version for production")
 		(comment 2 "1.1 : R33 & R34 value set to 1k")
+		(comment 3 "1.2 : R13 to R18 set to 510 Ohm, R32 set to 510 Ohm")
 	)
 	(lib_symbols
 		(symbol "Carbonaro:FULARR_MP1584EN"
@@ -7762,7 +7764,7 @@
 				)
 			)
 		)
-		(property "Value" "1k"
+		(property "Value" "510"
 			(at 67.31 20.32 90)
 			(effects
 				(font
@@ -10131,7 +10133,7 @@
 				)
 			)
 		)
-		(property "Value" "1k"
+		(property "Value" "510"
 			(at 67.31 165.1 90)
 			(effects
 				(font
@@ -11608,7 +11610,7 @@
 				)
 			)
 		)
-		(property "Value" "330"
+		(property "Value" "510"
 			(at 177.8 60.96 90)
 			(effects
 				(font
@@ -12223,7 +12225,7 @@
 				)
 			)
 		)
-		(property "Value" "1k"
+		(property "Value" "510"
 			(at 67.31 46.99 90)
 			(effects
 				(font
@@ -12502,7 +12504,7 @@
 				)
 			)
 		)
-		(property "Value" "1k"
+		(property "Value" "510"
 			(at 67.31 134.62 90)
 			(effects
 				(font
@@ -12634,7 +12636,7 @@
 				)
 			)
 		)
-		(property "Value" "1k"
+		(property "Value" "510"
 			(at 67.31 102.87 90)
 			(effects
 				(font
@@ -13483,7 +13485,7 @@
 				)
 			)
 		)
-		(property "Value" "1k"
+		(property "Value" "510"
 			(at 67.31 73.66 90)
 			(effects
 				(font
