@@ -8,7 +8,7 @@ export PATH := $(IDF_PATH)/tools:$(PATH)
 
 # Default serial port (override with `make flash PORT=/dev/ttyUSB1`)
 PORT ?= /dev/ttyACM0
-BAUD ?= 115200
+BAUD ?= 921600
 
 # ESP-IDF environment
 export BATCH_BUILD=1
