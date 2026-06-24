@@ -4,8 +4,6 @@
 #include "ha_entities.h"
 #include "led.h"
 #include "mqtt.h"
-#include "schedule.h"
-#include "sntp.h"
 #include "version.h"
 #include "wifi.h"
 #include "zone.h"
@@ -49,10 +47,6 @@ void app_main(void)
     controller_init();
     button_init();
 
-    /* Networking. wifi_init() also initialises NVS, which schedule_init()
-     * depends on, so it must come first. */
     led_set_status(STATUS_LED_CONNECTING);
     wifi_init(on_wifi_connect, on_wifi_disconnect);
-    schedule_init();
-    time_sync_init();
 }

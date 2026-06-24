@@ -23,10 +23,6 @@ void controller_on_button(uint8_t zone);
 void controller_set_mode(controller_mode_t mode);
 void controller_set_duration(uint32_t duration_min);
 
-/* Notify the controller that the schedule was replaced (no-op for now,
- * kept as a hook). */
-void controller_schedule_changed(void);
-
 /* Republish current mode + zone state. Wired as the mqtt on-connect callback
  * so HA picks up the live state even if no retained messages are present. */
 void controller_publish_state(void);

@@ -7,8 +7,6 @@
 #include "freertos/timers.h"
 #include "ha.h"
 #include "led.h"
-#include "schedule.h"
-#include "sntp.h"
 #include "utils.h"
 #include "zone.h"
 #include "zone_config.h"
@@ -50,7 +48,6 @@ static QueueHandle_t queue = NULL;
 
 static controller_mode_t mode = MODE_AUTO;
 static uint32_t duration_min = DEFAULT_DURATION_MIN;
-static int16_t last_fired_minute = -1; /* hour*60+minute, dedup auto fires */
 
 static TimerHandle_t idle_timer = NULL;
 static TimerHandle_t run_timer = NULL;
@@ -167,11 +164,6 @@ static void handle_button(uint8_t zone)
 
 static void handle_set_mode(controller_mode_t new_mode)
 {
-    if (new_mode == MODE_AUTO)
-    {
-        stop_all_zones();
-        last_fired_minute = -1;
-    }
     switch_mode(new_mode);
 }
 
@@ -187,37 +179,6 @@ static void handle_run_expired(void)
     if (!zone_any_active()) return;
     ESP_LOGI(TAG, "Stopping zones (timer reached)");
     stop_all_zones();
-}
-
-/* Periodic logic ************************************************************/
-
-static void tick_auto(const struct tm* lt)
-{
-    int16_t minute_of_day = lt->tm_hour * 60 + lt->tm_min;
-    if (minute_of_day == last_fired_minute) return;
-
-    const schedule_entry_t* e =
-        schedule_match(lt->tm_hour, lt->tm_min, lt->tm_wday);
-    if (e)
-    {
-        ESP_LOGI(TAG,
-                 "auto fire: zone=%u duration=%u min",
-                 e->zone,
-                 e->duration_min);
-        switch_zone(e->zone, (uint32_t)e->duration_min);
-        last_fired_minute = minute_of_day;
-    }
-}
-
-static void tick(void)
-{
-    if (!time_sync_ready()) return;
-    if (mode != MODE_AUTO) return;
-
-    time_t now = time(NULL);
-    struct tm lt;
-    localtime_r(&now, &lt);
-    tick_auto(&lt);
 }
 
 /* Task **********************************************************************/
@@ -245,7 +206,6 @@ static void task(void* arg)
                     break;
             }
         }
-        tick();
     }
 }
 
@@ -285,10 +245,6 @@ void controller_set_duration(uint32_t duration_min)
 {
     event_t ev = {.id = EV_SET_DURATION, .duration_min = duration_min};
     xQueueSend(queue, &ev, 0);
-}
-
-void controller_schedule_changed(void)
-{ /* no-op for now */
 }
 
 void controller_publish_state(void)
