@@ -12,7 +12,7 @@ config DEVICE_NAME
 
 config ESP32_MODEL
     string "ESP32 chip model"
-    default "ESP32"
+    default "ESP32C6"
 
 config MANUFACTURER
     string "Manufacturer"
@@ -91,10 +91,10 @@ config GPIO_ZONE_6
 
 config GPIO_LED_STATUS
     int "Status LED GPIO"
-    default 2
+    default 10
 
 config GPIO_LED_AUTO
     int "Auto-mode LED GPIO"
-    default 3
+    default 11
 
 endmenu
