@@ -1,9 +1,11 @@
 # Lawn sprinkler controller
 
+![](./docs/github_banner.png)
+
 ## 1. Overview
 
 ESP32 based firmware (ESP-IDF / FreeRTOS) for a 6-zone lawn-sprinkler controller.
-It drives 6 active-high triac outputs with mutual exclusion (only one zone
+Drives 6 active-high triac outputs with mutual exclusion (only one zone
 ever on at a time), and use 6 ON/OFF buttons for Home Assistant.
 
 State is exchanged over MQTT, and on (re)connect
@@ -13,16 +15,7 @@ appear grouped under one device, no manual HA configuration required.
 
 ## 2. Features
 
-  - **MANUAL mode** :
-    1. On the control box:
-    a) Pressing one of the 6 push buttons starts watering the zone and stops watering the other zones
-    b) Pressing it a second time stops watering the zone
-    c) If AUTO mode is active, it switches to manual mode
-    d) The system automatically returns to AUTO mode after 30 minutes without a zone being manually activated
-    2. On the HA app:
-    Select the zone, enter a duration, press START
-
-### **MANUAL mode** :
+### 2.1. **MANUAL mode** :
 
 1. On the control box:
 
@@ -38,7 +31,7 @@ appear grouped under one device, no manual HA configuration required.
 
     Set a duration, then select a zone to water.
 
-### Status LED
+### 2.2. Status LED
 
 - **STATUS LED** : gives indication on the status of the lawn sprinkler controller
   - OFF: The device is turned off
@@ -51,13 +44,23 @@ appear grouped under one device, no manual HA configuration required.
 
 ## 3. Hardware
 
+### 🙌 Sponsor
+
+Huge thanks to **PCBWay** for sponsoring the PCB manufacturing for this project.
+Their support, help and advices helped make this project physically real.
+
+If you're looking for high-quality PCB fabrication or assembly services, check them out:
+
+👉 https://www.pcbway.com
+
+![](./docs/pcbway_logo.png)
+
 Designed around a Waveshare esp32-C6 dev kit N8.
 Drives 6 triac BT136-600 in Dpak package
 Uses former Rainbird ESP-RXZe controller housing and its 24Vac/0.65A transformer
 
-Electronic board designed using Kicad 9
-
 ## 4. Software
+
 Developped with esp idf on freeRTOS architecture
 
 ### 4.1. Build & flash
@@ -93,11 +96,11 @@ With `MQTT_TOPIC_PREFIX = "lawn-sprinkler/"`:
 
 #### Subscribed (HA -> device)
 
-| Topic                         | Payload                | Effect                                         |
-| ----------------------------- | ---------------------- | ---------------------------------------------- |
-| `lawn-sprinkler/mode/set`     | `AUTO` \| `MANUAL`     | Switch mode                                    |
-| `lawn-sprinkler/duration/set` | minutes (e.g. `10`)    | Set MANUAL default duration                    |
-| `lawn-sprinkler/zone/<n>/set` | `ON` \| `OFF`          | Toggle zone (uses the current MANUAL duration) |
+| Topic                         | Payload             | Effect                                         |
+| ----------------------------- | ------------------- | ---------------------------------------------- |
+| `lawn-sprinkler/mode/set`     | `AUTO` \| `MANUAL`  | Switch mode                                    |
+| `lawn-sprinkler/duration/set` | minutes (e.g. `10`) | Set MANUAL default duration                    |
+| `lawn-sprinkler/zone/<n>/set` | `ON` \| `OFF`       | Toggle zone (uses the current MANUAL duration) |
 
 #### Published (device -> HA), retained
 
@@ -140,14 +143,21 @@ First, we need to create the template in Dashboard UI. This prevent a lot of dup
 button_card_templates:
   lawn_sprinkler_button_base:
     icon: mdi:sprinkler-variant
-    show_name: false
+    show_name: true
     show_state: false
+    layout: icon_name
     styles:
       card:
         - padding: 8px
         - height: 48px
         - border-radius: 12px
-        - --zone-color: var(--blue-color)
+        - '--zone-color': var(--blue-color)
+      name:
+        - padding-left: 0px
+        - color: var(--zone-color)
+        - justify-self: start
+        - font-size: 10pt
+        - font-weight: 500
       icon:
         - width: 26px
         - height: 26px
@@ -204,9 +214,10 @@ cards:
       - type: custom:button-card
         template: lawn_sprinkler_button_base
         entity: switch.lawn_sprinkler_zone_0
+        name: ZONE_1
         styles:
           card:
-            - --zone-color: var(--blue-color)
+            - "--zone-color": var(--blue-color)
         tap_action:
           action: call-service
           service: switch.toggle
@@ -215,9 +226,10 @@ cards:
       - type: custom:button-card
         template: lawn_sprinkler_button_base
         entity: switch.lawn_sprinkler_zone_1
+        name: ZONE_2
         styles:
           card:
-            - --zone-color: var(--green-color)
+            - "--zone-color": var(--green-color)
         tap_action:
           action: call-service
           service: switch.toggle
@@ -226,9 +238,10 @@ cards:
       - type: custom:button-card
         template: lawn_sprinkler_button_base
         entity: switch.lawn_sprinkler_zone_2
+        name: ZONE_3
         styles:
           card:
-            - --zone-color: var(--purple-color)
+            - "--zone-color": var(--purple-color)
         tap_action:
           action: call-service
           service: switch.toggle
@@ -239,9 +252,10 @@ cards:
       - type: custom:button-card
         template: lawn_sprinkler_button_base
         entity: switch.lawn_sprinkler_zone_3
+        name: ZONE_4
         styles:
           card:
-            - --zone-color: var(--red-color)
+            - "--zone-color": var(--red-color)
         tap_action:
           action: call-service
           service: switch.toggle
@@ -250,9 +264,10 @@ cards:
       - type: custom:button-card
         template: lawn_sprinkler_button_base
         entity: switch.lawn_sprinkler_zone_4
+        name: ZONE_5
         styles:
           card:
-            - --zone-color: var(--cyan-color)
+            - "--zone-color": var(--cyan-color)
         tap_action:
           action: call-service
           service: switch.toggle
@@ -261,15 +276,15 @@ cards:
       - type: custom:button-card
         template: lawn_sprinkler_button_base
         entity: switch.lawn_sprinkler_zone_5
+        name: ZONE_6
         styles:
           card:
-            - --zone-color: var(--yellow-color)
+            - "--zone-color": var(--yellow-color)
         tap_action:
           action: call-service
           service: switch.toggle
           target:
             entity_id: switch.lawn_sprinkler_zone_5
-
 ```
 
 Notes:
